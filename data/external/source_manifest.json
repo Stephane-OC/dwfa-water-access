@@ -1,0 +1,65 @@
+{
+  "retrieved_on": "2026-10-05",
+  "period": [
+    2000,
+    2018
+  ],
+  "country_scope": 194,
+  "fact_rows": 3686,
+  "sources": [
+    {
+      "source": "WHO_SAN",
+      "local_file": "data/external/WHO_WSH_SANITATION_BASIC_2000_2018.json",
+      "download_url": "https://ghoapi.azureedge.net/api/WSH_SANITATION_BASIC?%24filter=SpatialDimType+eq+%27COUNTRY%27+and+Dim1+eq+%27RESIDENCEAREATYPE_TOTL%27+and+TimeDim+ge+2000+and+TimeDim+le+2018",
+      "bytes": 2516003,
+      "sha256": "f804769d4763da8ece8184058b6eaccedb957407580d9039244e21adc8327d7c",
+      "downloaded_on": "2026-10-05",
+      "http_last_modified": null,
+      "retrieved_rows": 4187,
+      "source_update_dates": [
+        "2026-01-23T16:14:42.183+01:00"
+      ]
+    },
+    {
+      "source": "WHO_HYG",
+      "local_file": "data/external/WHO_WSH_HYGIENE_BASIC_2000_2018.json",
+      "download_url": "https://ghoapi.azureedge.net/api/WSH_HYGIENE_BASIC?%24filter=SpatialDimType+eq+%27COUNTRY%27+and+Dim1+eq+%27RESIDENCEAREATYPE_TOTL%27+and+TimeDim+ge+2000+and+TimeDim+le+2018",
+      "bytes": 702667,
+      "sha256": "634140eca05ea13c79f03abe36f3ee481fa87f133733141d3ee5ac0269e06b8c",
+      "downloaded_on": "2026-10-05",
+      "http_last_modified": null,
+      "retrieved_rows": 1175,
+      "source_update_dates": [
+        "2026-01-23T16:25:16.547+01:00"
+      ]
+    },
+    {
+      "source": "FAO_LAND",
+      "local_file": "data/external/FAOSTAT_Inputs_LandUse_Source.zip",
+      "download_url": "https://bulks-faostat.fao.org/production/Inputs_LandUse_E_All_Data_(Normalized).zip",
+      "bytes": 2970716,
+      "sha256": "39b739fbfb694971207a2efa572c41e8de2386fc5cb33caaf2a188e9c9a6ca3f",
+      "downloaded_on": "2026-10-05",
+      "http_last_modified": "Fri, 02 Oct 2026 08:15:20 GMT",
+      "retrieved_rows": 5163
+    }
+  ],
+  "land_conversion": "1000 ha × 10 = km²",
+  "rate_conversion": "percent ÷ 100 = fraction",
+  "no_imputation_in_project": true,
+  "source_estimates_may_be_modelled_or_imputed": true,
+  "FAO_land_flags": {
+    "Flag": " Description",
+    "A": "Official value",
+    "E": "Estimated value",
+    "I": "Value imputed by a receiving agency",
+    "L": "Missing value; data exist but were not collected",
+    "X": "Value from external organization"
+  },
+  "unavailable_attempts": [
+    {
+      "indicator": "FAO SDG 6.4.2 water stress",
+      "result": "HTTP 502 on tested SDMX endpoint; not included"
+    }
+  ]
+}

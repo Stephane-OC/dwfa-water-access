@@ -1,0 +1,195 @@
+Country,ISO3,Continent,WHORegion
+Afghanistan,AFG,Asie,Eastern Mediterranean
+Albania,ALB,Europe,Europe
+Algeria,DZA,Afrique,Africa
+Andorra,AND,Europe,Europe
+Angola,AGO,Afrique,Africa
+Antigua and Barbuda,ATG,Amérique du Nord,Americas
+Argentina,ARG,Amérique du Sud,Americas
+Armenia,ARM,Asie,Europe
+Australia,AUS,Océanie,Western Pacific
+Austria,AUT,Europe,Europe
+Azerbaijan,AZE,Asie,Europe
+Bahamas,BHS,Amérique du Nord,Americas
+Bahrain,BHR,Asie,Eastern Mediterranean
+Bangladesh,BGD,Asie,South-East Asia
+Barbados,BRB,Amérique du Nord,Americas
+Belarus,BLR,Europe,Europe
+Belgium,BEL,Europe,Europe
+Belize,BLZ,Amérique du Nord,Americas
+Benin,BEN,Afrique,Africa
+Bhutan,BTN,Asie,South-East Asia
+Bolivia (Plurinational State of),BOL,Amérique du Sud,Americas
+Bosnia and Herzegovina,BIH,Europe,Europe
+Botswana,BWA,Afrique,Africa
+Brazil,BRA,Amérique du Sud,Americas
+Brunei Darussalam,BRN,Asie,Western Pacific
+Bulgaria,BGR,Europe,Europe
+Burkina Faso,BFA,Afrique,Africa
+Burundi,BDI,Afrique,Africa
+Cabo Verde,CPV,Afrique,Africa
+Cambodia,KHM,Asie,Western Pacific
+Cameroon,CMR,Afrique,Africa
+Canada,CAN,Amérique du Nord,Americas
+Central African Republic,CAF,Afrique,Africa
+Chad,TCD,Afrique,Africa
+Chile,CHL,Amérique du Sud,Americas
+China,CHN,Asie,Western Pacific
+Colombia,COL,Amérique du Sud,Americas
+Comoros,COM,Afrique,Africa
+Congo,COG,Afrique,Africa
+Cook Islands,COK,Océanie,Western Pacific
+Costa Rica,CRI,Amérique du Nord,Americas
+Croatia,HRV,Europe,Europe
+Cuba,CUB,Amérique du Nord,Americas
+Cyprus,CYP,Asie,Europe
+Czechia,CZE,Europe,Europe
+Côte d'Ivoire,CIV,Afrique,Africa
+Democratic People's Republic of Korea,PRK,Asie,South-East Asia
+Democratic Republic of the Congo,COD,Afrique,Africa
+Denmark,DNK,Europe,Europe
+Djibouti,DJI,Afrique,Eastern Mediterranean
+Dominica,DMA,Amérique du Nord,Americas
+Dominican Republic,DOM,Amérique du Nord,Americas
+Ecuador,ECU,Amérique du Sud,Americas
+Egypt,EGY,Afrique,Eastern Mediterranean
+El Salvador,SLV,Amérique du Nord,Americas
+Equatorial Guinea,GNQ,Afrique,Africa
+Eritrea,ERI,Afrique,Africa
+Estonia,EST,Europe,Europe
+Eswatini,SWZ,Afrique,Africa
+Ethiopia,ETH,Afrique,Africa
+Fiji,FJI,Océanie,Western Pacific
+Finland,FIN,Europe,Europe
+France,FRA,Europe,Europe
+Gabon,GAB,Afrique,Africa
+Gambia,GMB,Afrique,Africa
+Georgia,GEO,Asie,Europe
+Germany,DEU,Europe,Europe
+Ghana,GHA,Afrique,Africa
+Greece,GRC,Europe,Europe
+Grenada,GRD,Amérique du Nord,Americas
+Guatemala,GTM,Amérique du Nord,Americas
+Guinea,GIN,Afrique,Africa
+Guinea-Bissau,GNB,Afrique,Africa
+Guyana,GUY,Amérique du Sud,Americas
+Haiti,HTI,Amérique du Nord,Americas
+Honduras,HND,Amérique du Nord,Americas
+Hungary,HUN,Europe,Europe
+Iceland,ISL,Europe,Europe
+India,IND,Asie,South-East Asia
+Indonesia,IDN,Asie,South-East Asia
+Iran (Islamic Republic of),IRN,Asie,Eastern Mediterranean
+Iraq,IRQ,Asie,Eastern Mediterranean
+Ireland,IRL,Europe,Europe
+Israel,ISR,Asie,Europe
+Italy,ITA,Europe,Europe
+Jamaica,JAM,Amérique du Nord,Americas
+Japan,JPN,Asie,Western Pacific
+Jordan,JOR,Asie,Eastern Mediterranean
+Kazakhstan,KAZ,Asie,Europe
+Kenya,KEN,Afrique,Africa
+Kiribati,KIR,Océanie,Western Pacific
+Kuwait,KWT,Asie,Eastern Mediterranean
+Kyrgyzstan,KGZ,Asie,Europe
+Lao People's Democratic Republic,LAO,Asie,Western Pacific
+Latvia,LVA,Europe,Europe
+Lebanon,LBN,Asie,Eastern Mediterranean
+Lesotho,LSO,Afrique,Africa
+Liberia,LBR,Afrique,Africa
+Libya,LBY,Afrique,Eastern Mediterranean
+Lithuania,LTU,Europe,Europe
+Luxembourg,LUX,Europe,Europe
+Madagascar,MDG,Afrique,Africa
+Malawi,MWI,Afrique,Africa
+Malaysia,MYS,Asie,Western Pacific
+Maldives,MDV,Asie,South-East Asia
+Mali,MLI,Afrique,Africa
+Malta,MLT,Europe,Europe
+Marshall Islands,MHL,Océanie,Western Pacific
+Mauritania,MRT,Afrique,Africa
+Mauritius,MUS,Afrique,Africa
+Mexico,MEX,Amérique du Nord,Americas
+Micronesia (Federated States of),FSM,Océanie,Western Pacific
+Monaco,MCO,Europe,Europe
+Mongolia,MNG,Asie,Western Pacific
+Montenegro,MNE,Europe,Europe
+Morocco,MAR,Afrique,Eastern Mediterranean
+Mozambique,MOZ,Afrique,Africa
+Myanmar,MMR,Asie,South-East Asia
+Namibia,NAM,Afrique,Africa
+Nauru,NRU,Océanie,Western Pacific
+Nepal,NPL,Asie,South-East Asia
+Netherlands,NLD,Europe,Europe
+New Zealand,NZL,Océanie,Western Pacific
+Nicaragua,NIC,Amérique du Nord,Americas
+Niger,NER,Afrique,Africa
+Nigeria,NGA,Afrique,Africa
+Niue,NIU,Océanie,Western Pacific
+Norway,NOR,Europe,Europe
+Oman,OMN,Asie,Eastern Mediterranean
+Pakistan,PAK,Asie,Eastern Mediterranean
+Palau,PLW,Océanie,Western Pacific
+Panama,PAN,Amérique du Nord,Americas
+Papua New Guinea,PNG,Océanie,Western Pacific
+Paraguay,PRY,Amérique du Sud,Americas
+Peru,PER,Amérique du Sud,Americas
+Philippines,PHL,Asie,Western Pacific
+Poland,POL,Europe,Europe
+Portugal,PRT,Europe,Europe
+Qatar,QAT,Asie,Eastern Mediterranean
+Republic of Korea,KOR,Asie,Western Pacific
+Republic of Moldova,MDA,Europe,Europe
+Republic of North Macedonia,MKD,Europe,Europe
+Romania,ROU,Europe,Europe
+Russian Federation,RUS,Europe,Europe
+Rwanda,RWA,Afrique,Africa
+Saint Kitts and Nevis,KNA,Amérique du Nord,Americas
+Saint Lucia,LCA,Amérique du Nord,Americas
+Saint Vincent and the Grenadines,VCT,Amérique du Nord,Americas
+Samoa,WSM,Océanie,Western Pacific
+San Marino,SMR,Europe,Europe
+Sao Tome and Principe,STP,Afrique,Africa
+Saudi Arabia,SAU,Asie,Eastern Mediterranean
+Senegal,SEN,Afrique,Africa
+Serbia,SRB,Europe,Europe
+Seychelles,SYC,Afrique,Africa
+Sierra Leone,SLE,Afrique,Africa
+Singapore,SGP,Asie,Western Pacific
+Slovakia,SVK,Europe,Europe
+Slovenia,SVN,Europe,Europe
+Solomon Islands,SLB,Océanie,Western Pacific
+Somalia,SOM,Afrique,Eastern Mediterranean
+South Africa,ZAF,Afrique,Africa
+South Sudan,SSD,Afrique,Africa
+Spain,ESP,Europe,Europe
+Sri Lanka,LKA,Asie,South-East Asia
+Sudan,SDN,Afrique,Eastern Mediterranean
+Suriname,SUR,Amérique du Sud,Americas
+Sweden,SWE,Europe,Europe
+Switzerland,CHE,Europe,Europe
+Syrian Arab Republic,SYR,Asie,Eastern Mediterranean
+Tajikistan,TJK,Asie,Europe
+Thailand,THA,Asie,South-East Asia
+Timor-Leste,TLS,Asie,South-East Asia
+Togo,TGO,Afrique,Africa
+Tonga,TON,Océanie,Western Pacific
+Trinidad and Tobago,TTO,Amérique du Nord,Americas
+Tunisia,TUN,Afrique,Eastern Mediterranean
+Turkey,TUR,Asie,Europe
+Turkmenistan,TKM,Asie,Europe
+Tuvalu,TUV,Océanie,Western Pacific
+Uganda,UGA,Afrique,Africa
+Ukraine,UKR,Europe,Europe
+United Arab Emirates,ARE,Asie,Eastern Mediterranean
+United Kingdom of Great Britain and Northern Ireland,GBR,Europe,Europe
+United Republic of Tanzania,TZA,Afrique,Africa
+United States of America,USA,Amérique du Nord,Americas
+Uruguay,URY,Amérique du Sud,Americas
+Uzbekistan,UZB,Asie,Europe
+Vanuatu,VUT,Océanie,Western Pacific
+Venezuela (Bolivarian Republic of),VEN,Amérique du Sud,Americas
+Viet Nam,VNM,Asie,Western Pacific
+Yemen,YEM,Asie,Eastern Mediterranean
+Zambia,ZMB,Afrique,Africa
+Zimbabwe,ZWE,Afrique,Africa
