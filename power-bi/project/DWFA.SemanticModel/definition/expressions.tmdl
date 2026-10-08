@@ -1,0 +1,670 @@
+expression pDataFolder = "C:\Users\elawy\Documents\DEV\DWFA\data\raw" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: a3b3c8fc-e782-4034-98a8-1526534450ad
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Text
+
+expression pExternalSourceMode = "Fichiers bruts" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: adf6b0c9-9e51-4abd-98f0-8cb68993953f
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Text
+
+expression pExternalFolder = "C:\Users\elawy\Documents\DEV\DWFA\data\external" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+	lineageTag: ba2dff06-3f53-44ad-a66d-ade35bd4b34b
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Text
+
+expression fxReadCsv =
+		(fileName as text) as table =>
+		    let
+		        Folder = Text.TrimEnd(pDataFolder, {"\", "/"}),
+		        Source = Csv.Document(
+		            File.Contents(Folder & "/" & fileName), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]
+		        ),
+		        Headers = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+		        MissingAsNull = Table.ReplaceValue(Headers, "", null, Replacer.ReplaceValue, Table.ColumnNames(Headers))
+		    in
+		        MissingAsNull
+	lineageTag: d015c685-bf79-44aa-aaa5-83eedad76312
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Function
+
+expression fxNormalizeCountry =
+		(country as nullable text) as nullable text =>
+		    let
+		        Clean = if country = null then null else Text.Trim(Text.Clean(country)),
+		        Canonical = if Clean = "North Macedonia" then "Republic of North Macedonia" else Clean
+		    in
+		        Canonical
+	lineageTag: 32147ed7-da14-4ebc-886a-8d88df60dd2f
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Function
+
+expression fxAssertUnique =
+		(input as table, keys as list, label as text) as table =>
+		    let
+		        Counts = Table.Group(input, keys, {{"RowCount", each Table.RowCount(_), Int64.Type}}),
+		        Duplicates = Table.SelectRows(Counts, each [RowCount] > 1),
+		        Checked =
+		            if Table.RowCount(Duplicates) > 0 then
+		                error Error.Record("DuplicateKey", "Clé non unique : " & label, Duplicates)
+		            else
+		                input
+		    in
+		        Checked
+	lineageTag: 1419a734-9799-48a2-857d-65208b74387e
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Function
+
+expression fxPercent =
+		(value as nullable number) as nullable number =>
+		    if value = null then
+		        null
+		    else if value < 0 or value > 100.001 then
+		        error Error.Record("InvalidPercent", "Pourcentage hors bornes", value)
+		    else
+		        List.Min({value, 100}) / 100
+	lineageTag: 6e59c01b-b868-43d6-a2ad-6e05a6927b51
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Function
+
+expression stg_RegionCountry =
+		let
+		    Source = fxReadCsv("RegionCountry.csv"),
+		    Names = Table.RenameColumns(Source, {{"COUNTRY (DISPLAY)", "Country"}, {"REGION (DISPLAY)", "WHORegion"}}),
+		    Clean = Table.TransformColumns(
+		        Names, {{"Country", fxNormalizeCountry, type text}, {"WHORegion", Text.Trim, type text}}
+		    ),
+		    Unique = fxAssertUnique(Clean, {"Country"}, "RegionCountry")
+		in
+		    Unique
+	lineageTag: 1ff063d2-fcaa-42de-8d2b-b1051773c9b1
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression stg_CountryGeography =
+		let
+		    Source = fxReadCsv("CountryGeography.csv"),
+		    Typed = Table.TransformColumnTypes(
+		        Source,
+		        {{"Country", type text}, {"ISO3", type text}, {"Continent", type text}, {"WHORegion", type text}},
+		        "en-US"
+		    ),
+		    Unique = fxAssertUnique(Typed, {"Country"}, "CountryGeography")
+		in
+		    Unique
+	lineageTag: cd2769cb-0317-4654-96c4-b37db8cb1464
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression stg_Population =
+		let
+		    Source = fxReadCsv("Population.csv"),
+		    Typed = Table.TransformColumnTypes(
+		        Source,
+		        {{"Country", type text}, {"Granularity", type text}, {"Year", Int64.Type}, {"Population", type number}},
+		        "en-US"
+		    ),
+		    Clean = Table.TransformColumns(Typed, {{"Country", fxNormalizeCountry, type text}}),
+		
+		    RemovedAggregate = Table.SelectRows(Clean, each [Country] <> "China"),
+		    Mainland = Table.TransformColumns(
+		        RemovedAggregate, {{"Country", each if _ = "China, mainland" then "China" else _, type text}}
+		    ),
+		    Persons = Table.TransformColumns(Mainland, {{"Population", each _ * 1000, type number}}),
+		    Selected = Table.SelectRows(Persons, each List.Contains({"Total", "Urban", "Rural"}, [Granularity])),
+		    Unique = fxAssertUnique(Selected, {"Country", "Year", "Granularity"}, "Population")
+		in
+		    Unique
+	lineageTag: 7581e659-b821-46db-aea1-d85f90e27666
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression stg_Water =
+		let
+		    Source = fxReadCsv("BasicAndSafelyManagedDrinkingWaterServices.csv"),
+		    Named = Table.RenameColumns(
+		        Source,
+		        {
+		            {"Population using at least basic drinking-water services (%)", "Basic"},
+		            {"Population using safely managed drinking-water services (%)", "Safe"}
+		        }
+		    ),
+		    Typed = Table.TransformColumnTypes(
+		        Named,
+		        {
+		            {"Country", type text},
+		            {"Granularity", type text},
+		            {"Year", Int64.Type},
+		            {"Basic", type number},
+		            {"Safe", type number}
+		        },
+		        "en-US"
+		    ),
+		    Clean = Table.TransformColumns(
+		        Typed,
+		        {
+		            {"Country", fxNormalizeCountry, type text},
+		            {"Basic", fxPercent, type number},
+		            {"Safe", fxPercent, type number}
+		        }
+		    ),
+		    Unique = fxAssertUnique(Clean, {"Country", "Year", "Granularity"}, "Water")
+		in
+		    Unique
+	lineageTag: 4d2c6afe-c51d-4710-a2de-c3a2a38c56be
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression stg_Mortality =
+		let
+		    Source = fxReadCsv("MortalityRateAttributedToWater.csv"),
+		    Named = Table.RenameColumns(
+		        Source,
+		        {
+		            {"Mortality rate attributed to exposure to unsafe WASH services", "MortalityRate"},
+		            {"WASH deaths", "WASHDeaths"}
+		        }
+		    ),
+		    Typed = Table.TransformColumnTypes(
+		        Named,
+		        {
+		            {"Country", type text},
+		            {"Granularity", type text},
+		            {"Year", Int64.Type},
+		            {"MortalityRate", type number},
+		            {"WASHDeaths", type number}
+		        },
+		        "en-US"
+		    ),
+		    Clean = Table.TransformColumns(Typed, {{"Country", fxNormalizeCountry, type text}}),
+		
+		    Total = Table.SelectRows(Clean, each [Granularity] = "Total"),
+		    Unique = fxAssertUnique(Total, {"Country", "Year"}, "Mortality")
+		in
+		    Unique
+	lineageTag: c8c6b6ae-dadc-435e-8105-ed54ed4d2ef4
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression stg_Stability =
+		let
+		    Source = fxReadCsv("PoliticalStability.csv"),
+		    Named = Table.RenameColumns(Source, {{"Political_Stability", "PoliticalStability"}}),
+		    Typed = Table.TransformColumnTypes(
+		        Named,
+		        {
+		            {"Country", type text},
+		            {"Granularity", type text},
+		            {"Year", Int64.Type},
+		            {"PoliticalStability", type number}
+		        },
+		        "en-US"
+		    ),
+		    Clean = Table.TransformColumns(Typed, {{"Country", fxNormalizeCountry, type text}}),
+		    Mainland = Table.TransformColumns(Clean, {{"Country", each if _ = "China, mainland" then "China" else _, type text}}),
+		    Total = Table.SelectRows(Mainland, each [Granularity] = "Total"),
+		    Unique = fxAssertUnique(Total, {"Country", "Year"}, "PoliticalStability")
+		in
+		    Unique
+	lineageTag: 790b52c8-ce75-49d8-9cb0-dba2502a6d65
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression QA_MissingData =
+		let
+		    Source = Fact_CountryYear,
+		    ByYear = Table.Group(
+		        Source,
+		        {"Year"},
+		        {
+		            {"Rows", each Table.RowCount(_), Int64.Type},
+		            {"PopulationCountries", each List.NonNullCount([PopulationTotal]), Int64.Type},
+		            {"BasicCountries", each List.NonNullCount([BasicTotal]), Int64.Type},
+		            {"SafeCountries", each List.NonNullCount([SafeTotal]), Int64.Type},
+		            {"MortalityCountries", each List.NonNullCount([MortalityRate]), Int64.Type},
+		            {"StabilityCountries", each List.NonNullCount([PoliticalStability]), Int64.Type}
+		        }
+		    )
+		in
+		    ByYear
+	lineageTag: cd77e5e2-131f-4faf-9fa9-0e0ae8e70ce6
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression stg_ExternalContext =
+		let
+		    Mode = pExternalSourceMode,
+		    Output =
+		        if Mode = "CSV fourni" then
+		            let
+		                Source = fxReadCsv("ExternalContextCountryYear.csv"),
+		                Typed = Table.TransformColumnTypes(
+		                    Source,
+		                    {
+		                        {"Country", type text},
+		                        {"ISO3", type text},
+		                        {"Year", Int64.Type},
+		                        {"SanitationBasicPercent", type number},
+		                        {"HygieneBasicPercent", type number},
+		                        {"LandArea1000Ha", type number},
+		                        {"FAOLandFlag", type text}
+		                    },
+		                    "en-US"
+		                ),
+		
+		                Converted = Table.TransformColumns(
+		                    Typed,
+		                    {
+		                        {"SanitationBasicPercent", each fxPercent(_), type number},
+		                        {"HygieneBasicPercent", each fxPercent(_), type number},
+		                        {"LandArea1000Ha", each if _ = null then null else _ * 10, type number}
+		                    }
+		                ),
+		                Named = Table.RenameColumns(
+		                    Converted,
+		                    {
+		                        {"SanitationBasicPercent", "SanitationBasicTotal"},
+		                        {"HygieneBasicPercent", "HygieneBasicTotal"},
+		                        {"LandArea1000Ha", "LandAreaKm2"}
+		                    }
+		                ),
+		                Selected = Table.SelectColumns(
+		                    Named, {"Country", "Year", "SanitationBasicTotal", "HygieneBasicTotal", "LandAreaKm2"}
+		                ),
+		                Unique = fxAssertUnique(Selected, {"Country", "Year"}, "stg_ExternalContext")
+		            in
+		                Unique
+		        else if Mode = "Fichiers bruts" or Mode = "En ligne" then
+		            stg_ExternalContextFromSources
+		        else
+		            error Error.Record("InvalidExternalMode", "Valeurs admises : CSV fourni, Fichiers bruts, En ligne", Mode)
+		in
+		    Output
+	lineageTag: 8b6e7628-18c6-40e6-b57b-573ce6e492e9
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression fxReadZipCsv =
+		(archive as binary, fileName as text) as table =>
+		    let
+		        Zip = Binary.Buffer(archive),
+		        Size = Binary.Length(Zip),
+		        UInt = (offset as number, length as number) as number =>
+		            let
+		                Bytes = Binary.ToList(Binary.Range(Zip, offset, length))
+		            in
+		                List.Sum(List.Transform({0..length - 1}, each Bytes{_} * Number.Power(256, _))),
+		        Find = (offset as number) as binary =>
+		            if offset + 4 > Size then
+		                error Error.Record("ZipFileNotFound", "CSV absent de l'archive", fileName)
+		            else if UInt(offset, 4) <> 67324752 then
+		                error Error.Record("ZipFileNotFound", "CSV absent ou format ZIP non pris en charge", fileName)
+		            else
+		                let
+		                    Flags = UInt(offset + 6, 2),
+		                    Method = UInt(offset + 8, 2),
+		                    CompressedSize = UInt(offset + 18, 4),
+		                    UncompressedSize = UInt(offset + 22, 4),
+		                    NameLength = UInt(offset + 26, 2),
+		                    ExtraLength = UInt(offset + 28, 2),
+		                    EntryName = Text.FromBinary(Binary.Range(Zip, offset + 30, NameLength), TextEncoding.Utf8),
+		                    PayloadOffset = offset + 30 + NameLength + ExtraLength,
+		                    NextOffset = PayloadOffset + CompressedSize,
+		                    Unsupported =
+		                        Number.Mod(Flags, 2) = 1
+		                        or Number.Mod(Number.IntegerDivide(Flags, 8), 2) = 1
+		                        or CompressedSize = 4294967295
+		                        or UncompressedSize = 4294967295,
+		                    Result =
+		                        if Unsupported then
+		                            error
+		                                Error.Record(
+		                                    "UnsupportedZip",
+		                                    "ZIP chiffré, ZIP64 ou descripteur de données non pris en charge",
+		                                    EntryName
+		                                )
+		                        else if NextOffset > Size then
+		                            error Error.Record("TruncatedZip", "Archive ZIP incomplète", EntryName)
+		                        else if EntryName <> fileName then
+		                            @Find(NextOffset)
+		                        else
+		                            let
+		                                Payload = Binary.Range(Zip, PayloadOffset, CompressedSize),
+		                                Unpacked =
+		                                    if Method = 0 then
+		                                        Payload
+		                                    else if Method = 8 then
+		                                        Binary.Decompress(Payload, Compression.Deflate)
+		                                    else
+		                                        error
+		                                            Error.Record(
+		                                                "UnsupportedZipCompression",
+		                                                "Méthode de compression non prise en charge",
+		                                                Method
+		                                            )
+		                            in
+		                                if Binary.Length(Unpacked) <> UncompressedSize then
+		                                    error
+		                                        Error.Record("InvalidZipLength", "Taille décompressée incorrecte", EntryName)
+		                                else
+		                                    Unpacked
+		                in
+		                    Result,
+		        CsvBinary = Find(0),
+		        Csv = Csv.Document(CsvBinary, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+		        Headers = Table.PromoteHeaders(Csv, [PromoteAllScalars = true]),
+		        MissingAsNull = Table.ReplaceValue(Headers, "", null, Replacer.ReplaceValue, Table.ColumnNames(Headers))
+		    in
+		        MissingAsNull
+	lineageTag: ed4f9d7e-14ac-4450-8aa4-54e15c9b94f4
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Function
+
+expression src_OMSContext =
+		let
+		    Folder = Text.TrimEnd(pExternalFolder, {"\", "/"}),
+		    Geo = fxAssertUnique(Table.SelectColumns(Dim_Country, {"Country", "ISO3"}), {"ISO3"}, "OMS ISO3"),
+		    ReadPage = (path as text, query as record) as record =>
+		        Json.Document(
+		            Web.Contents(
+		                "https://ghoapi.azureedge.net", [RelativePath = path, Query = query, Timeout = #duration(0, 0, 3, 0)]
+		            )
+		        ),
+		    ReadAll = (indicator as text) as list =>
+		        let
+		            Filter = "SpatialDimType eq 'COUNTRY' and Dim1 eq 'RESIDENCEAREATYPE_TOTL' and TimeDim ge 2000 and TimeDim le 2018",
+		            First = ReadPage("api/" & indicator, [#"$filter" = Filter]),
+		            Pages = List.Generate(
+		                () => [Doc = First, More = true],
+		                each [More],
+		                each
+		                    let
+		                        Next = Record.FieldOrDefault([Doc], "@odata.nextLink", null)
+		                    in
+		                        if Next = null then
+		                            [Doc = null, More = false]
+		                        else
+		                            let
+		                                Parts = Uri.Parts(Next)
+		                            in
+		                                if Text.Lower(Parts[Host]) <> "ghoapi.azureedge.net" then
+		                                    error
+		                                        Error.Record(
+		                                            "UnexpectedWHOHost", "Hôte de pagination inattendu", Parts[Host]
+		                                        )
+		                                else
+		                                    [Doc = ReadPage(Text.TrimStart(Parts[Path], "/"), Parts[Query]), More = true],
+		                each[Doc][value]
+		            ),
+		            Combined = List.Combine(Pages)
+		        in
+		            Combined,
+		    GetIndicator = (indicator as text, localFile as text, metric as text) as table =>
+		        let
+		            Records =
+		                if pExternalSourceMode = "En ligne" then
+		                    ReadAll(indicator)
+		                else
+		                    let
+		                        Doc = Json.Document(File.Contents(fxLatestExternalFile({indicator}, {".json"})))
+		                    in
+		                        if Record.FieldOrDefault(Doc, "@odata.nextLink", null) <> null then
+		                            error
+		                                Error.Record(
+		                                    "IncompleteWHOExtract",
+		                                    "Extraction JSON incomplète ; utiliser le mode En ligne",
+		                                    localFile
+		                                )
+		                        else
+		                            Doc[value],
+		            Raw = Table.FromRecords(Records),
+		            Selected = Table.SelectRows(
+		                Raw,
+		                each
+		                    [IndicatorCode] = indicator
+		                    and [SpatialDimType] = "COUNTRY"
+		                    and [TimeDimType] = "YEAR"
+		                    and [Dim1] = "RESIDENCEAREATYPE_TOTL"
+		                    and [Dim2] = null
+		                    and [Dim3] = null
+		                    and [TimeDim] >= 2000
+		                    and [TimeDim] <= 2018
+		            ),
+		            Fields = Table.SelectColumns(Selected, {"SpatialDim", "TimeDim", "NumericValue"}),
+		            Named = Table.RenameColumns(
+		                Fields, {{"SpatialDim", "ISO3"}, {"TimeDim", "Year"}, {"NumericValue", "Rate"}}
+		            ),
+		            Typed = Table.TransformColumnTypes(
+		                Named, {{"ISO3", type text}, {"Year", Int64.Type}, {"Rate", type number}}, "en-US"
+		            ),
+		            Unique = fxAssertUnique(Typed, {"ISO3", "Year"}, indicator),
+		            Joined = Table.NestedJoin(Unique, {"ISO3"}, Geo, {"ISO3"}, "CountryMap", JoinKind.Inner),
+		            Expanded = Table.ExpandTableColumn(Joined, "CountryMap", {"Country"}),
+		            Fraction = Table.TransformColumns(Expanded, {{"Rate", each fxPercent(_), type number}}),
+		            Metric = Table.AddColumn(Fraction, "Metric", each metric, type text),
+		            Output = Table.SelectColumns(Metric, {"Country", "Year", "Metric", "Rate"})
+		        in
+		            Output,
+		    Sanitation = GetIndicator(
+		        "WSH_SANITATION_BASIC", "WHO_WSH_SANITATION_BASIC_2000_2018.json", "SanitationBasicTotal"
+		    ),
+		    Hygiene = GetIndicator("WSH_HYGIENE_BASIC", "WHO_WSH_HYGIENE_BASIC_2000_2018.json", "HygieneBasicTotal"),
+		    Combined = fxAssertUnique(
+		        Table.Combine({Sanitation, Hygiene}), {"Country", "Year", "Metric"}, "OMS indicateur pays année"
+		    ),
+		    Pivoted = Table.Pivot(Combined, {"SanitationBasicTotal", "HygieneBasicTotal"}, "Metric", "Rate"),
+		    Output = Table.TransformColumnTypes(
+		        Pivoted,
+		        {
+		            {"Country", type text},
+		            {"Year", Int64.Type},
+		            {"SanitationBasicTotal", type number},
+		            {"HygieneBasicTotal", type number}
+		        },
+		        "en-US"
+		    )
+		in
+		    Output
+	lineageTag: a18a5325-f6f6-4e65-821c-197c758919c6
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression src_FAOLand =
+		let
+		    Folder = Text.TrimEnd(pExternalFolder, {"\", "/"}),
+		    Archive = Binary.Buffer(
+		        if pExternalSourceMode = "En ligne" then
+		            Web.Contents(
+		                "https://bulks-faostat.fao.org",
+		                [
+		                    RelativePath = "production/Inputs_LandUse_E_All_Data_(Normalized).zip",
+		                    Timeout = #duration(0, 0, 3, 0)
+		                ]
+		            )
+		        else
+		            File.Contents(
+		                fxLatestExternalFile(
+		                    {"FAOSTAT_Inputs_LandUse_Source", "Inputs_LandUse_E_All_Data_(Normalized)"}, {".zip"}
+		                )
+		            )
+		    ),
+		    Codes = fxReadZipCsv(Archive, "Inputs_LandUse_E_AreaCodes.csv"),
+		    TypedCodes = Table.TransformColumnTypes(Codes, {{"Area Code", type text}, {"Area", type text}}, "en-US"),
+		    CountryNames = Table.AddColumn(
+		        Table.SelectColumns(Dim_Country, {"Country"}),
+		        "FAOName",
+		        each
+		            if [Country] = "China" then
+		                "China; mainland"
+		            else if [Country] = "Nauru" then
+		                "Naoero"
+		            else if [Country] = "Netherlands" then
+		                "Netherlands (Kingdom of the)"
+		            else if [Country] = "Republic of North Macedonia" then
+		                "North Macedonia"
+		            else if [Country] = "Turkey" then
+		                "Türkiye"
+		            else
+		                [Country],
+		        type text
+		    ),
+		    MapJoin = Table.NestedJoin(CountryNames, {"FAOName"}, TypedCodes, {"Area"}, "FAOCode", JoinKind.LeftOuter),
+		    MapExpanded = Table.ExpandTableColumn(MapJoin, "FAOCode", {"Area Code"}),
+		    MissingNames = Table.SelectRows(MapExpanded, each [Area Code] = null),
+		    Map =
+		        if Table.RowCount(MissingNames) > 0 then
+		            error
+		                Error.Record(
+		                    "MissingFAOCountryMapping", "Libellés FAO à rapprocher explicitement", MissingNames[Country]
+		                )
+		        else
+		            fxAssertUnique(MapExpanded, {"Area Code"}, "Correspondance pays FAO"),
+		    Raw = fxReadZipCsv(Archive, "Inputs_LandUse_E_All_Data_(Normalized).csv"),
+		    Land = Table.SelectRows(
+		        Raw, each [Item Code] = "6601" and [Element Code] = "5110" and [Year] >= "2000" and [Year] <= "2018"
+		    ),
+		    UnitChecked =
+		        if Table.RowCount(Table.SelectRows(Land, each [Unit] <> "1000 ha")) > 0 then
+		            error Error.Record("UnexpectedFAOUnit", "Unité attendue : 1000 ha", null)
+		        else
+		            Land,
+		    Fields = Table.SelectColumns(UnitChecked, {"Area Code", "Year", "Value"}),
+		    Typed = Table.TransformColumnTypes(
+		        Fields, {{"Area Code", type text}, {"Year", Int64.Type}, {"Value", type number}}, "en-US"
+		    ),
+		    Joined = Table.NestedJoin(Typed, {"Area Code"}, Map, {"Area Code"}, "CountryMap", JoinKind.Inner),
+		    Expanded = Table.ExpandTableColumn(Joined, "CountryMap", {"Country"}),
+		    Converted = Table.AddColumn(
+		        Expanded,
+		        "LandAreaKm2",
+		        each
+		            if [Value] = null then
+		                null
+		            else if [Value] <= 0 then
+		                error Error.Record("InvalidLandArea", "Superficie non positive", [Country])
+		            else
+		                [Value] * 10,
+		        type number
+		    ),
+		    Output = fxAssertUnique(
+		        Table.SelectColumns(Converted, {"Country", "Year", "LandAreaKm2"}), {"Country", "Year"}, "FAO pays année"
+		    )
+		in
+		    Output
+	lineageTag: 38ccd6ee-7153-419a-8e5e-eda4beffdf16
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression stg_ExternalContextFromSources =
+		let
+		    Countries = Table.SelectColumns(Dim_Country, {"Country"}),
+		    WithYears = Table.AddColumn(Countries, "Years", each Dim_Year),
+		    Grid = Table.ExpandTableColumn(WithYears, "Years", {"Year"}),
+		    WHOJoin = Table.NestedJoin(
+		        Grid, {"Country", "Year"}, src_OMSContext, {"Country", "Year"}, "WHO", JoinKind.LeftOuter
+		    ),
+		    WHO = Table.ExpandTableColumn(WHOJoin, "WHO", {"SanitationBasicTotal", "HygieneBasicTotal"}),
+		    FAOJoin = Table.NestedJoin(WHO, {"Country", "Year"}, src_FAOLand, {"Country", "Year"}, "FAO", JoinKind.LeftOuter),
+		    FAO = Table.ExpandTableColumn(FAOJoin, "FAO", {"LandAreaKm2"}),
+		    Typed = Table.TransformColumnTypes(
+		        FAO,
+		        {
+		            {"Country", type text},
+		            {"Year", Int64.Type},
+		            {"SanitationBasicTotal", type number},
+		            {"HygieneBasicTotal", type number},
+		            {"LandAreaKm2", type number}
+		        },
+		        "en-US"
+		    ),
+		    Unique = fxAssertUnique(Typed, {"Country", "Year"}, "Compléments OMS FAO"),
+		    Output =
+		        if Table.RowCount(Unique) <> Table.RowCount(Countries) * Table.RowCount(Dim_Year) then
+		            error
+		                Error.Record(
+		                    "ExternalGridSize", "La jointure a modifié la taille de la grille", Table.RowCount(Unique)
+		                )
+		        else
+		            Unique
+		in
+		    Output
+	lineageTag: 6d575539-ade2-443a-971f-bdd701dff95a
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+expression fxLatestExternalFile =
+		(nameTokens as list, extensions as list) as text =>
+		    let
+		        Folder = Text.TrimEnd(pExternalFolder, {"\", "/"}),
+		        Files = Folder.Contents(Folder),
+		        Candidates = Table.SelectRows(
+		            Files,
+		            (row as record) =>
+		                List.Contains(extensions, Text.Lower(row[Extension]))
+		                and List.AnyTrue(
+		                    List.Transform(
+		                        nameTokens, (token as text) => Text.Contains(row[Name], token, Comparer.OrdinalIgnoreCase)
+		                    )
+		                )
+		        ),
+		        Sorted = Table.Sort(Candidates, {{"Date modified", Order.Descending}, {"Name", Order.Ascending}}),
+		        Output =
+		            if Table.RowCount(Sorted) = 0 then
+		                error
+		                    Error.Record(
+		                        "MissingExternalSource",
+		                        "Aucun fichier brut correspondant dans le dossier",
+		                        [
+		                            Folder = Folder,
+		                            NameTokens = nameTokens,
+		                            Extensions = extensions
+		                        ]
+		                    )
+		            else
+		                Folder & "/" & Sorted{0}[Name]
+		    in
+		        Output
+	lineageTag: f50aa415-5e2f-4c79-9d1d-df6ae1fdd08b
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Function
+

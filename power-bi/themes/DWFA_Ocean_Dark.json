@@ -1,0 +1,89 @@
+﻿{
+  "name": "DWFA Ocean Accents",
+  "dataColors": [
+    "#2ED3E6",
+    "#A78BFA",
+    "#34D399",
+    "#FB7185",
+    "#60A5FA",
+    "#FBBF24",
+    "#FE9666",
+    "#A66999",
+    "#3599B8",
+    "#DFBFBF",
+    "#4AC5BB",
+    "#5F6B6D",
+    "#FB8281",
+    "#F4D25A",
+    "#7F898A",
+    "#A4DDEE",
+    "#FDAB89",
+    "#B687AC",
+    "#28738A",
+    "#A78F8F",
+    "#168980",
+    "#293537",
+    "#BB4A4A",
+    "#B59525",
+    "#475052",
+    "#6A9FB0",
+    "#BD7150",
+    "#7B4F71",
+    "#1B4D5C",
+    "#706060",
+    "#0F5C55",
+    "#1C2325"
+  ],
+  "background": "#0B1426",
+  "foreground": "#EAF2FC",
+  "tableAccent": "#2ED3E6",
+  "good": "#34D399",
+  "neutral": "#FBBF24",
+  "bad": "#FB7185",
+  "minimum": "#173862",
+  "center": "#3B82F6",
+  "maximum": "#A5F3FC",
+  "null": "#94A3B8",
+  "firstLevelElements": "#EAF2FC",
+  "secondLevelElements": "#BCD0E8",
+  "textClasses": {
+    "callout": { "fontFace": "Segoe UI", "fontSize": 28, "color": "#EAF2FC" },
+    "title": { "fontFace": "Segoe UI", "fontSize": 14, "color": "#EAF2FC" },
+    "header": { "fontFace": "Segoe UI", "fontSize": 13, "color": "#EAF2FC" },
+    "label": { "fontFace": "Segoe UI", "fontSize": 12, "color": "#EAF2FC" }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [
+          {
+            "show": true,
+            "color": { "solid": { "color": "#12213A" } },
+            "transparency": 0
+          }
+        ],
+        "title": [
+          {
+            "show": true,
+            "fontColor": { "solid": { "color": "#EAF2FC" } },
+            "fontSize": 14
+          }
+        ],
+        "border": [
+          {
+            "show": true,
+            "color": { "solid": { "color": "#29415F" } },
+            "radius": 8
+          }
+        ]
+      }
+    },
+    "page": {
+      "*": {
+        "background": [
+          { "color": { "solid": { "color": "#0B1426" } }, "transparency": 0 }
+        ]
+      }
+    }
+  }
+}

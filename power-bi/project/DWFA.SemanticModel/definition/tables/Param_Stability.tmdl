@@ -1,0 +1,25 @@
+table Param_Stability
+	lineageTag: 81d3bbf7-8511-4a98-bee9-9ecf5e4893f3
+
+	column Minimum
+		dataType: double
+		formatString: 0.0
+		lineageTag: 86f3b228-d5d3-460e-b56a-20e057abcc51
+		summarizeBy: none
+		sourceColumn: Minimum
+
+		annotation SummarizationSetBy = User
+
+	partition Param_Stability = m
+		mode: import
+		source =
+				let
+				    Source = Table.FromList(List.Transform({-35..25}, each _ / 10), Splitter.SplitByNothing(), {"Minimum"}),
+				    Typed = Table.TransformColumnTypes(Source, {{"Minimum", type number}})
+				in
+				    Typed
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

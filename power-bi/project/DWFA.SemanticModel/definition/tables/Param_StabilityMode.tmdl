@@ -1,0 +1,19 @@
+table Param_StabilityMode
+	lineageTag: 01a0688a-b966-45f2-b11a-889da3cc8ba2
+
+	column Mode
+		dataType: string
+		lineageTag: 3a18f5a7-74cf-4222-993a-d4d3b5f5173c
+		summarizeBy: none
+		sourceColumn: Mode
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Param_StabilityMode = m
+		mode: import
+		source = #table(type table [Mode = text], {{"Tous les pays"},{"Appliquer le seuil"}})
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

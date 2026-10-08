@@ -1,0 +1,255 @@
+table Fact_CountryYear
+	lineageTag: 113c21a6-bd79-4d7c-a93b-620f5d33827c
+
+	column Country
+		dataType: string
+		lineageTag: b6a951dc-0a43-4714-906a-44e66c9db254
+		summarizeBy: none
+		sourceColumn: Country
+
+		annotation SummarizationSetBy = Automatic
+
+	column Year
+		dataType: int64
+		formatString: 0
+		lineageTag: 57d5c033-b677-421c-8da7-95880ef39c01
+		summarizeBy: none
+		sourceColumn: Year
+
+		annotation SummarizationSetBy = Automatic
+
+	column PopulationTotal
+		dataType: double
+		lineageTag: 6ad79661-a984-4b13-a34f-38f43de4e981
+		summarizeBy: sum
+		sourceColumn: PopulationTotal
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column PopulationUrban
+		dataType: double
+		lineageTag: 8067b1eb-e381-4b0a-b074-9215479cc8ac
+		summarizeBy: sum
+		sourceColumn: PopulationUrban
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column PopulationRural
+		dataType: double
+		lineageTag: 473961d0-693f-42d0-ace0-58a35f8ccae0
+		summarizeBy: sum
+		sourceColumn: PopulationRural
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column BasicTotal
+		dataType: double
+		formatString: 0.0%
+		lineageTag: 22c2858b-1383-41d1-bed4-91b144657894
+		summarizeBy: none
+		sourceColumn: BasicTotal
+
+		annotation SummarizationSetBy = User
+
+	column SafeTotal
+		dataType: double
+		formatString: 0.0%
+		lineageTag: fc482b95-a9f8-42ab-9930-99418894c003
+		summarizeBy: none
+		sourceColumn: SafeTotal
+
+		annotation SummarizationSetBy = User
+
+	column BasicUrban
+		dataType: double
+		formatString: 0.0%
+		lineageTag: 70306ffa-0dd2-4fe3-980c-2464a34c3635
+		summarizeBy: none
+		sourceColumn: BasicUrban
+
+		annotation SummarizationSetBy = User
+
+	column SafeUrban
+		dataType: double
+		formatString: 0.0%
+		lineageTag: 0ae85b60-309f-47bc-83a2-fee47bc29401
+		summarizeBy: none
+		sourceColumn: SafeUrban
+
+		annotation SummarizationSetBy = User
+
+	column BasicRural
+		dataType: double
+		formatString: 0.0%
+		lineageTag: 8315a6f9-9a46-49ec-bdc8-7f8024541c23
+		summarizeBy: none
+		sourceColumn: BasicRural
+
+		annotation SummarizationSetBy = User
+
+	column SafeRural
+		dataType: double
+		formatString: 0.0%
+		lineageTag: de9677e2-29b2-4ce7-b5d8-6dc73ad1bb30
+		summarizeBy: none
+		sourceColumn: SafeRural
+
+		annotation SummarizationSetBy = User
+
+	column MortalityRate
+		dataType: double
+		formatString: 0.0
+		lineageTag: 281a7622-577a-4c17-bcea-e75e2a032422
+		summarizeBy: none
+		sourceColumn: MortalityRate
+
+		annotation SummarizationSetBy = User
+
+	column WASHDeaths
+		dataType: double
+		lineageTag: 4e127667-797b-4bf9-a06a-501e4c59821e
+		summarizeBy: sum
+		sourceColumn: WASHDeaths
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column PoliticalStability
+		dataType: double
+		formatString: 0.0
+		lineageTag: a04c51ce-5a16-45b4-a585-0fd013e4c6c1
+		summarizeBy: none
+		sourceColumn: PoliticalStability
+
+		annotation SummarizationSetBy = User
+
+	column SanitationBasicTotal
+		dataType: double
+		formatString: 0.0%
+		lineageTag: d825303f-f571-49be-aff7-0209e6a78b60
+		summarizeBy: none
+		sourceColumn: SanitationBasicTotal
+
+		annotation SummarizationSetBy = User
+
+	column HygieneBasicTotal
+		dataType: double
+		formatString: 0.0%
+		lineageTag: 3a57d642-7d96-4371-bb61-1cfb5091c512
+		summarizeBy: none
+		sourceColumn: HygieneBasicTotal
+
+		annotation SummarizationSetBy = User
+
+	column LandAreaKm2
+		dataType: double
+		lineageTag: 265863c9-85fa-404e-9f49-737561586b07
+		summarizeBy: sum
+		sourceColumn: LandAreaKm2
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column CountryYearKey
+		dataType: string
+		lineageTag: 48245704-629a-4c7d-8668-46f3422c8147
+		summarizeBy: none
+		sourceColumn: CountryYearKey
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Fact_CountryYear = m
+		mode: import
+		source =
+				let
+				
+				    Countries = Table.SelectColumns(Dim_Country, {"Country"}),
+				    WithYears = Table.AddColumn(Countries, "Years", each Dim_Year),
+				    Grid = Table.ExpandTableColumn(WithYears, "Years", {"Year"}),
+				
+				    JoinMetric = (base as table, source as table, cols as list, names as list) as table =>
+				        Table.ExpandTableColumn(
+				            Table.NestedJoin(base, {"Country", "Year"}, source, {"Country", "Year"}, "Metric", JoinKind.LeftOuter),
+				            "Metric",
+				            cols,
+				            names
+				        ),
+				    PopTotal = JoinMetric(
+				        Grid, Table.SelectRows(stg_Population, each [Granularity] = "Total"), {"Population"}, {"PopulationTotal"}
+				    ),
+				    PopUrban = JoinMetric(
+				        PopTotal, Table.SelectRows(stg_Population, each [Granularity] = "Urban"), {"Population"}, {"PopulationUrban"}
+				    ),
+				    PopRural = JoinMetric(
+				        PopUrban, Table.SelectRows(stg_Population, each [Granularity] = "Rural"), {"Population"}, {"PopulationRural"}
+				    ),
+				    WaterTotal = JoinMetric(
+				        PopRural,
+				        Table.SelectRows(stg_Water, each [Granularity] = "Total"),
+				        {"Basic", "Safe"},
+				        {"BasicTotal", "SafeTotal"}
+				    ),
+				    WaterUrban = JoinMetric(
+				        WaterTotal,
+				        Table.SelectRows(stg_Water, each [Granularity] = "Urban"),
+				        {"Basic", "Safe"},
+				        {"BasicUrban", "SafeUrban"}
+				    ),
+				    WaterRural = JoinMetric(
+				        WaterUrban,
+				        Table.SelectRows(stg_Water, each [Granularity] = "Rural"),
+				        {"Basic", "Safe"},
+				        {"BasicRural", "SafeRural"}
+				    ),
+				    Mortality = JoinMetric(
+				        WaterRural, stg_Mortality, {"MortalityRate", "WASHDeaths"}, {"MortalityRate", "WASHDeaths"}
+				    ),
+				    Stability = JoinMetric(Mortality, stg_Stability, {"PoliticalStability"}, {"PoliticalStability"}),
+				    External = JoinMetric(
+				        Stability,
+				        stg_ExternalContext,
+				        {"SanitationBasicTotal", "HygieneBasicTotal", "LandAreaKm2"},
+				        {"SanitationBasicTotal", "HygieneBasicTotal", "LandAreaKm2"}
+				    ),
+				    Key = Table.AddColumn(External, "CountryYearKey", each [Country] & "|" & Text.From([Year], "en-US"), type text),
+				
+				    TypedFinal = Table.TransformColumnTypes(
+				        Key,
+				        {
+				            {"Country", type text},
+				            {"Year", Int64.Type},
+				            {"CountryYearKey", type text},
+				            {"PopulationTotal", type number},
+				            {"PopulationUrban", type number},
+				            {"PopulationRural", type number},
+				            {"BasicTotal", type number},
+				            {"SafeTotal", type number},
+				            {"BasicUrban", type number},
+				            {"SafeUrban", type number},
+				            {"BasicRural", type number},
+				            {"SafeRural", type number},
+				            {"MortalityRate", type number},
+				            {"WASHDeaths", type number},
+				            {"PoliticalStability", type number},
+				            {"SanitationBasicTotal", type number},
+				            {"HygieneBasicTotal", type number},
+				            {"LandAreaKm2", type number}
+				        },
+				        "en-US"
+				    ),
+				    Unique = fxAssertUnique(TypedFinal, {"CountryYearKey"}, "Fact_CountryYear")
+				in
+				    Unique
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

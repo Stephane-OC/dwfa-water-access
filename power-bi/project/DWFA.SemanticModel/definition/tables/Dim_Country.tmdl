@@ -1,0 +1,56 @@
+table Dim_Country
+	lineageTag: f0aefa9a-8e91-4164-89fc-09acf06dbc42
+
+	column WHORegion
+		dataType: string
+		lineageTag: d2fdd7b9-257b-447b-9573-ea869353d11a
+		summarizeBy: none
+		sourceColumn: WHORegion
+
+		annotation SummarizationSetBy = Automatic
+
+	column Country
+		dataType: string
+		lineageTag: 39f0d7cb-6640-48d7-9448-18aa90c64ab6
+		summarizeBy: none
+		sourceColumn: Country
+
+		annotation SummarizationSetBy = Automatic
+
+	column ISO3
+		dataType: string
+		lineageTag: 20850e5c-148b-409d-85c3-067264fc149a
+		summarizeBy: none
+		sourceColumn: ISO3
+
+		annotation SummarizationSetBy = Automatic
+
+	column Continent
+		dataType: string
+		lineageTag: 46f2f2c4-5739-44ad-839f-b5ce0d61b8ab
+		summarizeBy: none
+		sourceColumn: Continent
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim_Country = m
+		mode: import
+		source =
+				let
+				    Source = stg_RegionCountry,
+				    Join = Table.NestedJoin(Source, {"Country"}, stg_CountryGeography, {"Country"}, "Geo", JoinKind.LeftOuter),
+				    Expanded = Table.ExpandTableColumn(Join, "Geo", {"ISO3", "Continent"}),
+				    Missing = Table.SelectRows(Expanded, each [ISO3] = null or [Continent] = null),
+				    Checked =
+				        if Table.RowCount(Missing) > 0 then
+				            error Error.Record("MissingGeography", "Compléter le référentiel géographique", Missing)
+				        else
+				            Expanded,
+				    Unique = fxAssertUnique(Checked, {"Country"}, "Dim_Country")
+				in
+				    Unique
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

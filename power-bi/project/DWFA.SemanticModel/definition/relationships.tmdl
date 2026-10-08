@@ -1,0 +1,8 @@
+relationship AutoDetected_c93014dd-4b8b-412f-9c8a-c7cbeef44218
+	fromColumn: Fact_CountryYear.Country
+	toColumn: Dim_Country.Country
+
+relationship AutoDetected_ff393113-d4c7-48ac-8004-50fdaece7dc7
+	fromColumn: Fact_CountryYear.Year
+	toColumn: Dim_Year.Year
+
