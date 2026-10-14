@@ -1,0 +1,234 @@
+// ============================================================================
+// MESURES : Présentation et couleurs des vues mondiales
+// TABLE   : _Measures
+// ÉTAPE   : 1 — Monde · Synthèse et Monde · Carte
+// OBJECTIF: Ajouter les calculs nécessaires à cette étape du rapport
+// CRÉATION: Créer chaque mesure séparément, de haut en bas
+// PRÉREQUIS: Fichiers 00 à 03 déjà appliqués ; modèle Power Query chargé
+// ============================================================================
+
+// Libellé du périmètre sélectionné.
+// Dépendances : Analysis Year
+Year Label =
+IF (
+    HASONEVALUE (Dim_Year[Year]),
+    "Année " & FORMAT ([Analysis Year], "0"),
+    "Sélectionner une seule année"
+)
+
+// Libellé du périmètre sélectionné
+// Dépendances : Analysis Year
+Mortality Availability Label =
+IF (
+    [Analysis Year] = 2016,
+    "Mortalité WASH 2016",
+    "Mortalité WASH : donnée disponible uniquement en 2016"
+)
+
+// Libellé du périmètre sélectionné.
+// Dépendances : Analysis Year, Basic Countries Covered, Basic Population Coverage, Countries Included
+Basic Coverage Label =
+VAR Y = [Analysis Year]
+VAR Included =
+    COALESCE (
+        [Countries Included],
+        0
+    )
+VAR Covered =
+    COALESCE (
+        [Basic Countries Covered],
+        0
+    )
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK (Y),
+        "Choisir une seule année",
+Included = 0,
+"Aucun pays dans le périmètre sélectionné",
+Covered = 0,
+"Accès basique : donnée indisponible pour ce périmètre et cette année",
+"Couverture accès basique : " & FORMAT (Covered, "0") & " pays, " & FORMAT ([Basic Population Coverage], "0.0%") & " de la population du périmètre"
+)
+
+// Libellé du périmètre sélectionné
+// Dépendances : Analysis Year, Countries Included, Safe Countries Covered, Safe Population Coverage
+Safe Coverage Label =
+VAR Y = [Analysis Year]
+VAR Included =
+    COALESCE (
+        [Countries Included],
+        0
+    )
+VAR Covered =
+    COALESCE (
+        [Safe Countries Covered],
+        0
+    )
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK (Y),
+        "Choisir une seule année",
+Included = 0,
+"Aucun pays dans le périmètre sélectionné",
+Covered = 0,
+"Accès sûr : donnée indisponible pour ce périmètre et cette année",
+"Couverture accès sûr : " & FORMAT (Covered, "0") & " pays, " & FORMAT ([Safe Population Coverage], "0.0%") & " de la population du périmètre"
+)
+
+// Libellé du périmètre sélectionné.
+// Dépendances : Stability Filter Enabled, Stability Minimum
+Stability Filter Label =
+IF (
+    [Stability Filter Enabled] = 1,
+    "Stabilité ≥ " & FORMAT ([Stability Minimum], "0.0") & " ; valeurs inconnues exclues",
+    "Stabilité : tous les pays inclus"
+)
+
+// Les pays disponibles ou admissibles peuvent changer entre années, pas d’interprétation causale
+// Dépendances : Analysis Year, Basic Access Total
+Basic Access Previous Year =
+VAR Y = [Analysis Year]
+RETURN
+    IF (
+        NOT ISBLANK (Y),
+        CALCULATE (
+            [Basic Access Total],
+            REMOVEFILTERS (Dim_Year),
+            Dim_Year[Year] =
+            Y - 1
+        )
+    )
+
+// Indicateur complémentaire du périmètre sélectionné
+// Dépendances : Basic Access Previous Year, Basic Access Total
+Basic Access Change pp =
+IF (
+    NOT ISBLANK ([Basic Access Total]) && NOT ISBLANK ([Basic Access Previous Year]),
+    ( [Basic Access Total] - [Basic Access Previous Year]) * 100
+)
+
+// Valeur disponible : accent thématique. Valeur absente : gris
+// Dépendances : Population Total
+UI Population Color =
+VAR __MetricValue = [Population Total]
+RETURN
+    IF (ISBLANK (__MetricValue), "#94A3B8", "#2ED3E6")
+
+// Valeur disponible : accent thématique. Valeur absente : gris
+// Dépendances : Urban Population Share
+UI Urban Share Color =
+VAR __MetricValue = [Urban Population Share]
+RETURN
+    IF (ISBLANK (__MetricValue), "#94A3B8", "#A78BFA")
+
+// Valeur disponible : accent thématique. Valeur absente : gris
+// Dépendances : Basic Access Total
+UI Basic Access Color =
+VAR __MetricValue = [Basic Access Total]
+RETURN
+    IF (ISBLANK (__MetricValue), "#94A3B8", "#34D399")
+
+// Valeur disponible : accent thématique. Valeur absente : gris
+// Dépendances : Safe Access Total
+UI Safe Access Color =
+VAR __MetricValue = [Safe Access Total]
+RETURN
+    IF (ISBLANK (__MetricValue), "#94A3B8", "#34D399")
+
+// Signe positif : vert ; signe négatif : rose ; zéro ou absence : gris
+// Dépendances : Political Stability Mean
+UI Stability Color =
+VAR __MetricValue = [Political Stability Mean]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK (__MetricValue),
+        "#94A3B8",
+        __MetricValue > 0,
+        "#34D399",
+        __MetricValue < 0,
+        "#FB7185",
+        "#94A3B8"
+    )
+
+// Signe positif : vert ; signe négatif : rose ; zéro ou absence : gris
+// Dépendances : Basic Access Change pp
+UI Basic Change Color =
+VAR __MetricValue = [Basic Access Change pp]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK (__MetricValue),
+        "#94A3B8",
+        __MetricValue > 0,
+        "#34D399",
+        __MetricValue < 0,
+        "#FB7185",
+        "#94A3B8"
+    )
+
+// Charge positive : rose ; charge nulle observée : vert ; absence : gris
+// Dépendances : Mortality Rate Weighted
+UI Mortality Color =
+VAR __MetricValue = [Mortality Rate Weighted]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK (__MetricValue),
+        "#94A3B8",
+        __MetricValue > 0,
+        "#FB7185",
+__MetricValue = 0,
+"#34D399",
+"#94A3B8"
+)
+
+// Charge positive : rose ; charge nulle observée : vert ; absence : gris
+// Dépendances : WASH Deaths
+UI WASH Deaths Color =
+VAR __MetricValue = [WASH Deaths]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK (__MetricValue),
+        "#94A3B8",
+        __MetricValue > 0,
+        "#FB7185",
+__MetricValue = 0,
+"#34D399",
+"#94A3B8"
+)
+
+// Couverture complète : vert ; partielle : ambre ; nulle observée : rose ; absence : gris
+// Dépendances : Basic Population Coverage
+UI Basic Coverage Color =
+VAR __MetricValue = [Basic Population Coverage]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK (__MetricValue),
+        "#94A3B8",
+        __MetricValue >= 1 - 0.000000001,
+        "#34D399",
+        __MetricValue > 0,
+        "#FBBF24",
+        "#FB7185"
+    )
+
+// Couverture complète : vert ; partielle : ambre ; nulle observée : rose ; absence : gris
+// Dépendances : Safe Population Coverage
+UI Safe Coverage Color =
+VAR __MetricValue = [Safe Population Coverage]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK (__MetricValue),
+        "#94A3B8",
+        __MetricValue >= 1 - 0.000000001,
+        "#34D399",
+        __MetricValue > 0,
+        "#FBBF24",
+        "#FB7185"
+    )

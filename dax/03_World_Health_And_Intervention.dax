@@ -1,0 +1,146 @@
+// ============================================================================
+// MESURES : Santé, stabilité et besoins d’intervention
+// TABLE   : _Measures
+// ÉTAPE   : 1 — Monde · Synthèse et Monde · Carte
+// OBJECTIF: Ajouter les calculs nécessaires à cette étape du rapport
+// CRÉATION: Créer chaque mesure séparément, de haut en bas
+// PRÉREQUIS: Fichiers 00 à 02 déjà appliqués ; modèle Power Query chargé
+// ============================================================================
+
+// Moyenne simple des pays renseignés ; un pays = une voix, indicateur non démographique
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Political Stability Mean =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (NOT ISBLANK (SelectedYear), CONVERT (
+            SelectedYear,
+            INTEGER
+        ))
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+RETURN
+    AVERAGEX (
+        Eligible,
+        Fact_CountryYear[PoliticalStability]
+    )
+
+// Taux WASH pour 100 000 ; pondération par population FAO ; pas de report hors 2016
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Mortality Rate Weighted =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (NOT ISBLANK (SelectedYear), CONVERT (
+            SelectedYear,
+            INTEGER
+        ))
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Available =
+    FILTER (
+        Eligible,
+        NOT ISBLANK (Fact_CountryYear[MortalityRate]) && Fact_CountryYear[PopulationTotal] > 0
+    )
+RETURN
+    DIVIDE (
+        SUMX (
+            Available,
+            Fact_CountryYear[MortalityRate] * Fact_CountryYear[PopulationTotal]
+        ),
+        SUMX (
+            Available,
+            Fact_CountryYear[PopulationTotal]
+        )
+    )
+
+// Somme des estimations OMS Total ; pas de recalcul depuis la population FAO
+// Dépendances : Colonnes et paramètres du modèle Power Query
+WASH Deaths =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (NOT ISBLANK (SelectedYear), CONVERT (
+            SelectedYear,
+            INTEGER
+        ))
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+RETURN
+    SUMX (
+        Eligible,
+        Fact_CountryYear[WASHDeaths]
+    )
+
+// Proxy exploratoire sur 100, pondération 50/50 et plafond mortalité 100 choisis pour le projet ; aucune causalité politique
+// Dépendances : Basic Access Total, Mortality Rate Weighted
+Access Health Profile Score =
+VAR Access = [Basic Access Total]
+VAR Mortality = [Mortality Rate Weighted]
+RETURN
+    IF (
+        HASONEVALUE (Dim_Country[Country]) && NOT ISBLANK (Access) && NOT ISBLANK (Mortality),
+        50 * Access + 50 * ( 1 - MIN (DIVIDE (Mortality, 100), 1))
+    )
+
+// Indicateur complémentaire du périmètre sélectionné
+// Dépendances : People Without Basic Service
+Creation Need People =
+[People Without Basic Service]
