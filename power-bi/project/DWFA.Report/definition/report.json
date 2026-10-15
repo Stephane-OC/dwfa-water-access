@@ -40,7 +40,7 @@
           "expanded": {
             "expr": {
               "Literal": {
-                "Value": "true"
+                "Value": "false"
               }
             }
           }
@@ -64,6 +64,11 @@
       "name": "RegisteredResources",
       "type": "RegisteredResources",
       "items": [
+        {
+          "name": "dwfa_logo.png",
+          "path": "dwfa_logo.png",
+          "type": "Image"
+        },
         {
           "name": "DWFA_Ocean_Accents8585087963644465.json",
           "path": "DWFA_Ocean_Accents8585087963644465.json",

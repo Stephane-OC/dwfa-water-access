@@ -1,0 +1,393 @@
+table _Measures
+	lineageTag: cd7187ee-1424-4f97-977d-043df9a1667c
+
+	measure 'Analysis Year' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			RETURN IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+		formatString: 0
+		displayFolder: Pilotage
+		lineageTag: 54dc5917-f098-4af6-b2a1-abdf252cded0
+
+	measure 'Stability Minimum' = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+		formatString: 0.0
+		displayFolder: Pilotage
+		lineageTag: 9c21c16f-7a94-45a8-bdaf-5e7131ce081d
+
+	measure 'Stability Filter Enabled' = CONVERT ( IF ( SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil", 1, 0 ), INTEGER )
+		formatString: 0
+		displayFolder: Pilotage
+		lineageTag: ec8e5d95-89a9-48cc-b8ac-72b6ef106e15
+
+	measure 'Population Total' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			RETURN SUMX ( Eligible, Fact_CountryYear[PopulationTotal] )
+		formatString: #,0
+		displayFolder: Population
+		lineageTag: 4caf5e92-09a3-4fb4-b261-0371e51bb846
+
+	measure 'Population Urban' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			RETURN SUMX ( Eligible, Fact_CountryYear[PopulationUrban] )
+		formatString: #,0
+		displayFolder: Population
+		lineageTag: abc37beb-1cd2-4c72-bc7b-52d1fa3f8559
+
+	measure 'Population Rural' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			RETURN SUMX ( Eligible, Fact_CountryYear[PopulationRural] )
+		formatString: #,0
+		displayFolder: Population
+		lineageTag: 7a196141-1fac-4261-a4fa-dd590b5bf1f5
+
+	measure 'Urban Population Share' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			VAR Available = FILTER ( Eligible, NOT ISBLANK ( Fact_CountryYear[PopulationUrban] ) && NOT ISBLANK ( Fact_CountryYear[PopulationRural] ) )
+			RETURN DIVIDE ( SUMX ( Available, Fact_CountryYear[PopulationUrban] ), SUMX ( Available, Fact_CountryYear[PopulationUrban] + Fact_CountryYear[PopulationRural] ) )
+		formatString: 0.0%
+		displayFolder: Population
+		lineageTag: 428f4ff5-80d4-428f-aa0e-c9edc13ec051
+
+	measure 'Countries Included' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			RETURN COALESCE ( COUNTROWS ( Eligible ), 0 )
+		formatString: 0
+		displayFolder: Qualité
+		lineageTag: 503385b8-0ec2-4a1f-8f56-a9c6523d19f7
+
+	measure 'Eligible Country' = IF ( HASONEVALUE ( Dim_Country[Country] ) && NOT ISBLANK ( [Analysis Year] ) && [Countries Included] > 0, 1, 0 )
+		formatString: 0
+		displayFolder: Pilotage
+		lineageTag: 49e6dde1-2f1b-4f5a-9e83-d9334fc8a05d
+
+	measure 'Basic Access Total' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			VAR Available = FILTER ( Eligible, NOT ISBLANK ( Fact_CountryYear[BasicTotal] ) && Fact_CountryYear[PopulationTotal] > 0 )
+			RETURN DIVIDE ( SUMX ( Available, Fact_CountryYear[BasicTotal] * Fact_CountryYear[PopulationTotal] ), SUMX ( Available, Fact_CountryYear[PopulationTotal] ) )
+		formatString: 0.0%
+		displayFolder: Accès eau\Total
+		lineageTag: c97941d7-3fd4-43dc-adb5-ce89d9cb6816
+
+	measure 'Safe Access Total' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			VAR Available = FILTER ( Eligible, NOT ISBLANK ( Fact_CountryYear[SafeTotal] ) && Fact_CountryYear[PopulationTotal] > 0 )
+			RETURN DIVIDE ( SUMX ( Available, Fact_CountryYear[SafeTotal] * Fact_CountryYear[PopulationTotal] ), SUMX ( Available, Fact_CountryYear[PopulationTotal] ) )
+		formatString: 0.0%
+		displayFolder: Accès eau\Total
+		lineageTag: 61e7b2c3-3a51-4d39-9212-54d77625e7b0
+
+	measure 'Basic Countries Covered' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			RETURN COALESCE ( COUNTROWS ( FILTER ( Eligible, NOT ISBLANK ( Fact_CountryYear[BasicTotal] ) && Fact_CountryYear[PopulationTotal] > 0 ) ), 0 )
+		formatString: 0
+		displayFolder: Qualité
+		lineageTag: bd3e2cd5-f580-4dd7-ab76-61ea3f557fb5
+
+	measure 'Basic Population Coverage' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			VAR Available = FILTER ( Eligible, NOT ISBLANK ( Fact_CountryYear[BasicTotal] ) && Fact_CountryYear[PopulationTotal] > 0 )
+			RETURN IF ( [Population Total] > 0, COALESCE ( DIVIDE ( SUMX ( Available, Fact_CountryYear[PopulationTotal] ), [Population Total] ), 0 ) )
+		formatString: 0.0%
+		displayFolder: Qualité
+		lineageTag: e5d5a1fe-1607-4218-bf3c-d3f12124b36a
+
+	measure 'People Without Basic Service' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			VAR Available = FILTER ( Eligible, NOT ISBLANK ( Fact_CountryYear[BasicTotal] ) && Fact_CountryYear[PopulationTotal] > 0 )
+			RETURN SUMX ( Available, ( 1 - Fact_CountryYear[BasicTotal] ) * Fact_CountryYear[PopulationTotal] )
+		formatString: #,0
+		displayFolder: Accès eau\Impact
+		lineageTag: 09977917-4183-4ef2-9374-f262a90f7407
+
+	measure 'Safe Countries Covered' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			RETURN COALESCE ( COUNTROWS ( FILTER ( Eligible, NOT ISBLANK ( Fact_CountryYear[SafeTotal] ) && Fact_CountryYear[PopulationTotal] > 0 ) ), 0 )
+		formatString: 0
+		displayFolder: Qualité
+		lineageTag: c8437861-b148-40b2-8950-63dda344e563
+
+	measure 'Safe Population Coverage' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			VAR Available = FILTER ( Eligible, NOT ISBLANK ( Fact_CountryYear[SafeTotal] ) && Fact_CountryYear[PopulationTotal] > 0 )
+			RETURN IF ( [Population Total] > 0, COALESCE ( DIVIDE ( SUMX ( Available, Fact_CountryYear[PopulationTotal] ), [Population Total] ), 0 ) )
+		formatString: 0.0%
+		displayFolder: Qualité
+		lineageTag: b10ce693-da6c-43cc-aa80-b701bb81b44a
+
+	measure 'Basic Access Comparable' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			VAR Paired = FILTER ( Eligible, Fact_CountryYear[PopulationTotal] > 0 && NOT ISBLANK ( Fact_CountryYear[BasicTotal] ) && NOT ISBLANK ( Fact_CountryYear[SafeTotal] ) )
+			RETURN DIVIDE ( SUMX ( Paired, Fact_CountryYear[BasicTotal] * Fact_CountryYear[PopulationTotal] ), SUMX ( Paired, Fact_CountryYear[PopulationTotal] ) )
+		formatString: 0.0%
+		displayFolder: Modernisation
+		lineageTag: 795a1ad3-0d52-4041-a013-e760fe88fe38
+
+	measure 'Safe Access Comparable' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			VAR Paired = FILTER ( Eligible, Fact_CountryYear[PopulationTotal] > 0 && NOT ISBLANK ( Fact_CountryYear[BasicTotal] ) && NOT ISBLANK ( Fact_CountryYear[SafeTotal] ) )
+			RETURN DIVIDE ( SUMX ( Paired, Fact_CountryYear[SafeTotal] * Fact_CountryYear[PopulationTotal] ), SUMX ( Paired, Fact_CountryYear[PopulationTotal] ) )
+		formatString: 0.0%
+		displayFolder: Modernisation
+		lineageTag: a765d81b-96a5-4f7e-840d-56e42b96a930
+
+	measure 'Political Stability Mean' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			RETURN AVERAGEX ( Eligible, Fact_CountryYear[PoliticalStability] )
+		formatString: 0.00
+		displayFolder: Stabilité
+		lineageTag: 5190348f-03eb-444a-887d-0a56c8e4e806
+
+	measure 'Mortality Rate Weighted' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			VAR Available = FILTER ( Eligible, NOT ISBLANK ( Fact_CountryYear[MortalityRate] ) && Fact_CountryYear[PopulationTotal] > 0 )
+			RETURN DIVIDE ( SUMX ( Available, Fact_CountryYear[MortalityRate] * Fact_CountryYear[PopulationTotal] ), SUMX ( Available, Fact_CountryYear[PopulationTotal] ) )
+		formatString: 0.00
+		displayFolder: Santé
+		lineageTag: 0704e1ef-3c3f-4bc2-95fc-28a094b01bad
+
+	measure 'WASH Deaths' =
+			VAR SelectedYear = SELECTEDVALUE ( Dim_Year[Year] )
+			VAR Y = IF ( NOT ISBLANK ( SelectedYear ), CONVERT ( SelectedYear, INTEGER ) )
+			VAR Cutoff = CONVERT ( SELECTEDVALUE ( Param_Stability[Minimum], -2.5 ), DOUBLE )
+			VAR ApplyFilter = SELECTEDVALUE ( Param_StabilityMode[Mode], "Tous les pays" ) = "Appliquer le seuil"
+			VAR Eligible = FILTER ( Fact_CountryYear,
+			    NOT ISBLANK ( Y ) && Fact_CountryYear[Year] = Y &&
+			    ( NOT ( ApplyFilter ) || ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) )
+			RETURN SUMX ( Eligible, Fact_CountryYear[WASHDeaths] )
+		formatString: #,0
+		displayFolder: Santé
+		lineageTag: 5b86c04d-083a-4751-98b5-69ecfaf9b7c9
+
+	measure 'Access Health Profile Score' =
+			VAR Access = [Basic Access Total]
+			VAR Mortality = [Mortality Rate Weighted]
+			RETURN IF ( HASONEVALUE ( Dim_Country[Country] ) && NOT ISBLANK ( Access ) && NOT ISBLANK ( Mortality ),
+			    50 * Access + 50 * ( 1 - MIN ( DIVIDE ( Mortality, 100 ), 1 ) ) )
+		formatString: 0.0
+		displayFolder: Consulting
+		lineageTag: d7ce5504-a481-4f4c-b5c4-d51e03435f56
+
+	measure 'Creation Need People' = [People Without Basic Service]
+		formatString: #,0
+		displayFolder: Création
+		lineageTag: a0cc4654-d173-42f4-8ab2-7fc3b00ea63e
+
+	measure 'Year Label' = IF ( HASONEVALUE ( Dim_Year[Year] ), "Année " & FORMAT ( [Analysis Year], "0" ), "Sélectionner une seule année" )
+		displayFolder: Présentation
+		lineageTag: 8370370e-753a-4e7f-9760-6ba124013fe4
+
+	measure 'Mortality Availability Label' = IF ( [Analysis Year] = 2016, "Mortalité WASH 2016", "Mortalité WASH : donnée disponible uniquement en 2016" )
+		displayFolder: Présentation
+		lineageTag: 47fcb6ca-5177-4d0f-a1e0-413af855519a
+
+	measure 'Basic Coverage Label' =
+			VAR Y = [Analysis Year]
+			VAR Included = COALESCE ( [Countries Included], 0 )
+			VAR Covered = COALESCE ( [Basic Countries Covered], 0 )
+			RETURN SWITCH ( TRUE (),
+			    ISBLANK ( Y ), "Choisir une seule année",
+			    Included = 0, "Aucun pays dans le périmètre sélectionné",
+			    Covered = 0, "Accès basique : donnée indisponible pour ce périmètre et cette année",
+			    "Couverture accès basique : " & FORMAT ( Covered, "0" ) & " pays, " & FORMAT ( [Basic Population Coverage], "0.0%" ) & " de la population du périmètre" )
+		displayFolder: Présentation
+		lineageTag: 0f105f58-8100-4236-9318-f3ac8ab972e7
+
+	measure 'Safe Coverage Label' =
+			VAR Y = [Analysis Year]
+			VAR Included = COALESCE ( [Countries Included], 0 )
+			VAR Covered = COALESCE ( [Safe Countries Covered], 0 )
+			RETURN SWITCH ( TRUE (),
+			    ISBLANK ( Y ), "Choisir une seule année",
+			    Included = 0, "Aucun pays dans le périmètre sélectionné",
+			    Covered = 0, "Accès sûr : donnée indisponible pour ce périmètre et cette année",
+			    "Couverture accès sûr : " & FORMAT ( Covered, "0" ) & " pays, " & FORMAT ( [Safe Population Coverage], "0.0%" ) & " de la population du périmètre" )
+		displayFolder: Présentation
+		lineageTag: f5b0f5f9-b1f6-47df-a2cb-f4a6fb41b48c
+
+	measure 'Stability Filter Label' = IF ( [Stability Filter Enabled] = 1, "Stabilité ≥ " & FORMAT ( [Stability Minimum], "0.0" ) & " ; valeurs inconnues exclues", "Stabilité : tous les pays inclus" )
+		displayFolder: Présentation
+		lineageTag: 60d7e5a3-6986-4e73-9e7c-bd0e782cf510
+
+	measure 'Basic Access Previous Year' =
+			VAR Y = [Analysis Year]
+			RETURN IF ( NOT ISBLANK ( Y ), CALCULATE ( [Basic Access Total], REMOVEFILTERS ( Dim_Year ), Dim_Year[Year] = Y - 1 ) )
+		formatString: 0.0%
+		displayFolder: Évolution
+		lineageTag: a69cfa5b-bede-464d-945e-e2f1f1af5f54
+
+	measure 'Basic Access Change pp' = IF ( NOT ISBLANK ( [Basic Access Total] ) && NOT ISBLANK ( [Basic Access Previous Year] ), ( [Basic Access Total] - [Basic Access Previous Year] ) * 100 )
+		formatString: 0.0
+		displayFolder: Évolution
+		lineageTag: c9c8c674-392b-4a4c-9757-58ed18e690c6
+
+	measure 'UI Population Color' =
+			VAR __MetricValue = [Population Total]
+			RETURN IF ( ISBLANK ( __MetricValue ), "#94A3B8", "#2ED3E6" )
+		displayFolder: Présentation visuelle\Couleurs
+		lineageTag: c7c82c98-3a02-515b-b792-5f40380ad158
+
+	measure 'UI Urban Share Color' =
+			VAR __MetricValue = [Urban Population Share]
+			RETURN IF ( ISBLANK ( __MetricValue ), "#94A3B8", "#A78BFA" )
+		displayFolder: Présentation visuelle\Couleurs
+		lineageTag: adff00c6-f2bf-5f37-bdcb-dad3b39a4ad0
+
+	measure 'UI Basic Access Color' =
+			VAR __MetricValue = [Basic Access Total]
+			RETURN IF ( ISBLANK ( __MetricValue ), "#94A3B8", "#34D399" )
+		displayFolder: Présentation visuelle\Couleurs
+		lineageTag: e7fc0ffe-d140-5369-a093-25703468d8a8
+
+	measure 'UI Safe Access Color' =
+			VAR __MetricValue = [Safe Access Total]
+			RETURN IF ( ISBLANK ( __MetricValue ), "#94A3B8", "#34D399" )
+		displayFolder: Présentation visuelle\Couleurs
+		lineageTag: cc0ebcd7-4a55-5f89-afe7-fbade91d3c4b
+
+	measure 'UI Stability Color' =
+			VAR __MetricValue = [Political Stability Mean]
+			RETURN SWITCH ( TRUE (), ISBLANK ( __MetricValue ), "#94A3B8", __MetricValue > 0, "#34D399", __MetricValue < 0, "#FB7185", "#94A3B8" )
+		displayFolder: Présentation visuelle\Couleurs
+		lineageTag: aacf39f8-55d9-5573-9ced-058e48f94bb3
+
+	measure 'UI Basic Change Color' =
+			VAR __MetricValue = [Basic Access Change pp]
+			RETURN SWITCH ( TRUE (), ISBLANK ( __MetricValue ), "#94A3B8", __MetricValue > 0, "#34D399", __MetricValue < 0, "#FB7185", "#94A3B8" )
+		displayFolder: Présentation visuelle\Couleurs
+		lineageTag: 97d3aa58-f247-5749-ac3d-d806cbb8bac1
+
+	measure 'UI Mortality Color' =
+			VAR __MetricValue = [Mortality Rate Weighted]
+			RETURN SWITCH ( TRUE (), ISBLANK ( __MetricValue ), "#94A3B8", __MetricValue > 0, "#FB7185", __MetricValue = 0, "#34D399", "#94A3B8" )
+		displayFolder: Présentation visuelle\Couleurs
+		lineageTag: e3bbfcef-b98b-5ee9-8064-a7d743497f57
+
+	measure 'UI WASH Deaths Color' =
+			VAR __MetricValue = [WASH Deaths]
+			RETURN SWITCH ( TRUE (), ISBLANK ( __MetricValue ), "#94A3B8", __MetricValue > 0, "#FB7185", __MetricValue = 0, "#34D399", "#94A3B8" )
+		displayFolder: Présentation visuelle\Couleurs
+		lineageTag: b033f52b-f02a-595d-acdf-66962df38abc
+
+	measure 'UI Basic Coverage Color' =
+			VAR __MetricValue = [Basic Population Coverage]
+			RETURN SWITCH ( TRUE (), ISBLANK ( __MetricValue ), "#94A3B8", __MetricValue >= 1 - 0.000000001, "#34D399", __MetricValue > 0, "#FBBF24", "#FB7185" )
+		displayFolder: Présentation visuelle\Couverture
+		lineageTag: 44f3f622-c307-5aab-92df-edaeee86ede2
+
+	measure 'UI Safe Coverage Color' =
+			VAR __MetricValue = [Safe Population Coverage]
+			RETURN SWITCH ( TRUE (), ISBLANK ( __MetricValue ), "#94A3B8", __MetricValue >= 1 - 0.000000001, "#34D399", __MetricValue > 0, "#FBBF24", "#FB7185" )
+		displayFolder: Présentation visuelle\Couverture
+		lineageTag: a2f7deec-f939-5679-8bd2-87a2ae89ead9
+
+	column _Placeholder
+		isHidden
+		formatString: 0
+		lineageTag: d75c9a99-4a70-491d-b774-2fe1185e8b29
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [_Placeholder]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition _Measures = calculated
+		mode: import
+		source = DATATABLE ( "_Placeholder", INTEGER, { { 1 } } )
+
+	annotation PBI_Id = 4d130d2c046b4c6a9ca6674850f64afa
+

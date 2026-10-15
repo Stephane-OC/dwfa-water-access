@@ -18,6 +18,7 @@ ref table Dim_Year
 ref table Fact_CountryYear
 ref table Param_Stability
 ref table Param_StabilityMode
+ref table _Measures
 
 ref cultureInfo fr-FR
 
