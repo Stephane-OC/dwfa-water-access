@@ -1,0 +1,294 @@
+// ============================================================================
+// MESURES : Vue continentale et Vue nationale
+// TABLE   : _Measures
+// ÉTAPE   : 2 — Vue continentale et Vue nationale
+// OBJECTIF: Ajouter les calculs nécessaires à cette étape du rapport
+// CRÉATION: Créer chaque mesure séparément, de haut en bas
+// PRÉREQUIS: Fichiers 00 à 04 déjà appliqués, modèle Power Query chargé
+// ============================================================================
+
+// Moyenne pondérée ; seuls les pays avec taux et population du milieu participent
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Basic Access Urban =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (NOT ISBLANK (SelectedYear), CONVERT (
+            SelectedYear,
+            INTEGER
+        ))
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Available =
+    FILTER (
+        Eligible,
+        NOT ISBLANK (Fact_CountryYear[BasicUrban]) && Fact_CountryYear[PopulationUrban] > 0
+    )
+RETURN
+    DIVIDE (
+        SUMX (
+            Available,
+            Fact_CountryYear[BasicUrban] * Fact_CountryYear[PopulationUrban]
+        ),
+        SUMX (
+            Available,
+            Fact_CountryYear[PopulationUrban]
+        )
+    )
+
+// Moyenne pondérée ; seuls les pays avec taux et population du milieu participent
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Basic Access Rural =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (NOT ISBLANK (SelectedYear), CONVERT (
+            SelectedYear,
+            INTEGER
+        ))
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Available =
+    FILTER (
+        Eligible,
+        NOT ISBLANK (Fact_CountryYear[BasicRural]) && Fact_CountryYear[PopulationRural] > 0
+    )
+RETURN
+    DIVIDE (
+        SUMX (
+            Available,
+            Fact_CountryYear[BasicRural] * Fact_CountryYear[PopulationRural]
+        ),
+        SUMX (
+            Available,
+            Fact_CountryYear[PopulationRural]
+        )
+    )
+
+// Moyenne pondérée ; seuls les pays avec taux et population du milieu participent
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Safe Access Urban =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (NOT ISBLANK (SelectedYear), CONVERT (
+            SelectedYear,
+            INTEGER
+        ))
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Available =
+    FILTER (
+        Eligible,
+        NOT ISBLANK (Fact_CountryYear[SafeUrban]) && Fact_CountryYear[PopulationUrban] > 0
+    )
+RETURN
+    DIVIDE (
+        SUMX (
+            Available,
+            Fact_CountryYear[SafeUrban] * Fact_CountryYear[PopulationUrban]
+        ),
+        SUMX (
+            Available,
+            Fact_CountryYear[PopulationUrban]
+        )
+    )
+
+// Moyenne pondérée ; seuls les pays avec taux et population du milieu participent
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Safe Access Rural =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (NOT ISBLANK (SelectedYear), CONVERT (
+            SelectedYear,
+            INTEGER
+        ))
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Available =
+    FILTER (
+        Eligible,
+        NOT ISBLANK (Fact_CountryYear[SafeRural]) && Fact_CountryYear[PopulationRural] > 0
+    )
+RETURN
+    DIVIDE (
+        SUMX (
+            Available,
+            Fact_CountryYear[SafeRural] * Fact_CountryYear[PopulationRural]
+        ),
+        SUMX (
+            Available,
+            Fact_CountryYear[PopulationRural]
+        )
+    )
+
+// Estimation limitée aux pays avec donnée ; absence de taux jamais assimilée à zéro
+// Dépendances : Colonnes et paramètres du modèle Power Query
+People Without Safe Service =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (NOT ISBLANK (SelectedYear), CONVERT (
+            SelectedYear,
+            INTEGER
+        ))
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Available =
+    FILTER (
+        Eligible,
+        NOT ISBLANK (Fact_CountryYear[SafeTotal]) && Fact_CountryYear[PopulationTotal] > 0
+    )
+RETURN
+    SUMX (
+        Available,
+        ( 1 - Fact_CountryYear[SafeTotal]) * Fact_CountryYear[PopulationTotal]
+    )
+
+// Au moins basique inclut sûr ; segment exclusif = basique moins sûr
+// Dépendances : Basic Access Comparable, Safe Access Comparable
+Basic Only Share =
+IF (
+    NOT ISBLANK ([Basic Access Comparable]) && NOT ISBLANK ([Safe Access Comparable]),
+    [Basic Access Comparable] - [Safe Access Comparable]
+)
+
+// Indicateur complémentaire du périmètre sélectionné
+// Dépendances : Basic Access Comparable
+Below Basic Share =
+IF (NOT ISBLANK ([Basic Access Comparable]), 1 - [Basic Access Comparable])
+
+// Écart en points de pourcentage, pas variation relative
+// Dépendances : Basic Only Share
+Modernization Gap pp =
+[Basic Only Share] * 100
+
+// Indicateur à lire au niveau national ; les cohortes agrégées peuvent différer
+// Dépendances : Basic Access Rural, Basic Access Urban
+Urban Rural Access Gap pp =
+IF (
+    NOT ISBLANK ([Basic Access Urban]) && NOT ISBLANK ([Basic Access Rural]),
+    ( [Basic Access Urban] - [Basic Access Rural]) * 100
+)
+
+// Libellé du périmètre sélectionné
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Selected Country Label =
+SELECTEDVALUE (
+    Dim_Country[Country],
+    "Choisir un pays"
+)
+
+// Libellé du périmètre sélectionné
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Selected Continent Label =
+SELECTEDVALUE (
+    Dim_Country[Continent],
+    "Choisir un continent"
+)
+
+// Indicateur complémentaire du périmètre sélectionné
+// Dépendances : Colonnes et paramètres du modèle Power Query
+National Selection Valid =
+IF (HASONEVALUE (Dim_Country[Country]), 1, 0)
+
+// Indicateur complémentaire du périmètre sélectionné.
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Continental Selection Valid =
+IF (HASONEVALUE (Dim_Country[Continent]), 1, 0)
