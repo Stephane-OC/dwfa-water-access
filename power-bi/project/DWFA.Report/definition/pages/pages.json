@@ -1,8 +1,10 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pagesMetadata/1.1.0/schema.json",
   "pageOrder": [
+    "312926048e18f6a4dd3e",
     "beb010d77d16786b494a",
-    "312926048e18f6a4dd3e"
+    "ba3b1e884d5b7a15bdb5",
+    "af69b9c221d41651e793"
   ],
   "activePageName": "312926048e18f6a4dd3e"
 }
