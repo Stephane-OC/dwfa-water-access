@@ -2,7 +2,7 @@
 // MESURES : Santé, stabilité et besoins d’intervention
 // TABLE   : _Measures
 // ÉTAPE   : 1 — Monde · Synthèse et Monde · Carte
-// OBJECTIF: Ajouter les calculs nécessaires à cette étape du rapport
+// OBJECTIF: Ajouter les indicateurs santé et le classement sanitaire Top 5 / Top 10
 // CRÉATION: Créer chaque mesure séparément, de haut en bas
 // PRÉREQUIS: Fichiers 00 à 02 déjà appliqués ; modèle Power Query chargé
 // ============================================================================
@@ -13,10 +13,13 @@ Political Stability Mean =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -50,10 +53,13 @@ Mortality Rate Weighted =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -98,10 +104,13 @@ WASH Deaths =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -144,3 +153,189 @@ RETURN
 // Dépendances : People Without Basic Service
 Creation Need People =
 [People Without Basic Service]
+
+// Taux de mortalité WASH pour 100 000 habitants ; un pays et 2016 uniquement, selon le filtre de stabilité
+// Dépendances : Analysis Year, Mortality Rate Weighted
+Health Priority Rate =
+IF (
+    [Analysis Year] = 2016 && HASONEVALUE (Dim_Country[Country]),
+    [Mortality Rate Weighted]
+)
+
+// Rang dans le périmètre sélectionné ; taux décroissant à six décimales, puis décès décroissants et pays alphabétique
+// Dépendances : Health Priority Rate, WASH Deaths
+Health Priority Rank =
+VAR CountryName =
+    SELECTEDVALUE (Dim_Country[Country])
+VAR CurrentRate = [Health Priority Rate]
+VAR RateKey =
+    ROUND (
+        CurrentRate,
+        6
+    )
+VAR DeathsKey =
+    COALESCE (
+        [WASH Deaths],
+        -1
+    )
+VAR Candidates =
+    ADDCOLUMNS (
+        ALLSELECTED (Dim_Country),
+        "__Rate",
+        ROUND (
+            CALCULATE ([Health Priority Rate]),
+            6
+        ),
+        "__Deaths",
+        COALESCE (
+            CALCULATE ([WASH Deaths]),
+            -1
+        )
+    )
+VAR Eligible =
+    FILTER (
+        Candidates,
+        NOT ISBLANK ([__Rate]) && [__Rate] > 0
+    )
+VAR Ahead =
+    FILTER (
+        Eligible,
+        [__Rate] > RateKey ||
+        ( [__Rate] =
+            RateKey && [__Deaths] > DeathsKey) ||
+        ( [__Rate] =
+            RateKey && [__Deaths] =
+            DeathsKey && Dim_Country[Country] < CountryName)
+    )
+RETURN
+    IF (
+        NOT ISBLANK (CountryName) && NOT ISBLANK (CurrentRate) && CurrentRate > 0,
+        1 + COUNTROWS (Ahead)
+    )
+
+// Filtre de la carte et du tableau ; conserver la valeur 1 pour afficher les pays du Top choisi
+// Dépendances : Health Priority Rank, Priority Top N
+Health Priority In Top N =
+VAR CountryRank = [Health Priority Rank]
+RETURN
+    IF (
+        NOT ISBLANK (CountryRank),
+        IF (CountryRank <= [Priority Top N], 1, 0)
+    )
+
+// Taille des bulles = taux de mortalité des pays du Top ; les décès absolus restent un indicateur distinct
+// Dépendances : Health Priority In Top N, Health Priority Rate
+Health Priority Map Size =
+IF ([Health Priority In Top N] = 1, [Health Priority Rate])
+
+// Pays à mortalité positive et population positive retenus avant la limitation au Top
+// Dépendances : Health Priority Rate, Analysis Year
+Health Priority Candidate Count =
+VAR Candidates =
+    ADDCOLUMNS (
+        ALLSELECTED (Dim_Country),
+        "__Rate",
+        CALCULATE ([Health Priority Rate])
+    )
+RETURN
+    IF (
+        [Analysis Year] = 2016,
+        COALESCE (
+            COUNTROWS (
+                FILTER (
+                    Candidates,
+                    NOT ISBLANK ([__Rate]) && [__Rate] > 0
+                )
+            ),
+            0
+        )
+    )
+
+// Pays à mortalité et population positives écartés sous le seuil actif ; stabilité absente comptée séparément
+// Dépendances : Analysis Year, Stability Minimum, Stability Filter Enabled ; Fact_CountryYear et Dim_Country
+Health Priority Excluded Stability Count =
+VAR Y = [Analysis Year]
+VAR Cutoff = [Stability Minimum]
+VAR ApplyFilter = [Stability Filter Enabled] = 1
+VAR RowsInScope =
+    CALCULATETABLE (
+        Fact_CountryYear,
+        ALLSELECTED (Dim_Country)
+    )
+RETURN
+    IF (
+Y = 2016,
+IF (
+    ApplyFilter,
+    COALESCE (
+        COUNTROWS (
+            FILTER (
+                RowsInScope,
+                Fact_CountryYear[Year] =
+                Y && Fact_CountryYear[PopulationTotal] > 0 &&
+                NOT ISBLANK (Fact_CountryYear[MortalityRate]) && Fact_CountryYear[MortalityRate] > 0 &&
+                NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] < Cutoff
+            )
+        ),
+        0
+    ),
+    0
+)
+)
+
+// Pays à mortalité et population positives sans indice de stabilité ; exclus uniquement si le seuil est activé
+// Dépendances : Analysis Year, Stability Minimum, Stability Filter Enabled ; Fact_CountryYear et Dim_Country
+Health Priority Unknown Stability Count =
+VAR Y = [Analysis Year]
+VAR Cutoff = [Stability Minimum]
+VAR ApplyFilter = [Stability Filter Enabled] = 1
+VAR RowsInScope =
+    CALCULATETABLE (
+        Fact_CountryYear,
+        ALLSELECTED (Dim_Country)
+    )
+RETURN
+    IF (
+Y = 2016,
+COALESCE (
+    COUNTROWS (
+        FILTER (
+            RowsInScope,
+            Fact_CountryYear[Year] =
+            Y && Fact_CountryYear[PopulationTotal] > 0 &&
+            NOT ISBLANK (Fact_CountryYear[MortalityRate]) && Fact_CountryYear[MortalityRate] > 0 &&
+            ISBLANK (Fact_CountryYear[PoliticalStability])
+        )
+    ),
+    0
+)
+)
+
+// Pays admissibles selon le mode de stabilité mais sans mortalité ; une absence ne vaut jamais zéro
+// Dépendances : Analysis Year, Stability Minimum, Stability Filter Enabled ; Fact_CountryYear et Dim_Country
+Health Priority Missing Mortality Count =
+VAR Y = [Analysis Year]
+VAR Cutoff = [Stability Minimum]
+VAR ApplyFilter = [Stability Filter Enabled] = 1
+VAR RowsInScope =
+    CALCULATETABLE (
+        Fact_CountryYear,
+        ALLSELECTED (Dim_Country)
+    )
+RETURN
+    IF (
+Y = 2016,
+COALESCE (
+    COUNTROWS (
+        FILTER (
+            RowsInScope,
+            Fact_CountryYear[Year] =
+            Y && ISBLANK (Fact_CountryYear[MortalityRate]) &&
+            ( NOT (ApplyFilter) ||
+                ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                    Cutoff))
+        )
+    ),
+    0
+)
+)

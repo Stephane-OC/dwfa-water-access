@@ -13,10 +13,13 @@ Basic Access Total =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -61,10 +64,13 @@ Safe Access Total =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -109,10 +115,13 @@ Basic Countries Covered =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -151,10 +160,13 @@ Basic Population Coverage =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -202,10 +214,13 @@ People Without Basic Service =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -244,10 +259,13 @@ Safe Countries Covered =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -286,10 +304,13 @@ Safe Population Coverage =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -337,10 +358,13 @@ Basic Access Comparable =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -385,10 +409,13 @@ Safe Access Comparable =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (

@@ -13,10 +13,13 @@ Basic Access Urban =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -61,10 +64,13 @@ Basic Access Rural =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -109,10 +115,13 @@ Safe Access Urban =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -157,10 +166,13 @@ Safe Access Rural =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -205,10 +217,13 @@ People Without Safe Service =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -288,7 +303,7 @@ SELECTEDVALUE (
 National Selection Valid =
 IF (HASONEVALUE (Dim_Country[Country]), 1, 0)
 
-// Indicateur complémentaire du périmètre sélectionné.
+// Indicateur complémentaire du périmètre sélectionné
 // Dépendances : Colonnes et paramètres du modèle Power Query
 Continental Selection Valid =
 IF (HASONEVALUE (Dim_Country[Continent]), 1, 0)

@@ -1,0 +1,253 @@
+// ============================================================================
+// MESURES : Priorités d’intervention
+// TABLE   : _Measures
+// ÉTAPE   : 4 — Compléments création et modernisation
+// OBJECTIF: Compléter les priorités d’intervention ; aucun onglet supplémentaire
+// CRÉATION: Créer chaque mesure séparément, de haut en bas
+// PRÉREQUIS: Fichiers 00 à 06 déjà appliqués, modèle Power Query chargé
+// ============================================================================
+
+// Indicateur complémentaire du périmètre sélectionné
+// Dépendances : Population Total
+Comparable Population Coverage =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
+            SelectedYear,
+            INTEGER
+        )
+    )
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Paired =
+    FILTER (
+        Eligible,
+        Fact_CountryYear[PopulationTotal] > 0 && NOT ISBLANK (Fact_CountryYear[BasicTotal]) && NOT ISBLANK (Fact_CountryYear[SafeTotal])
+    )
+RETURN
+    IF (
+        [Population Total] > 0,
+        COALESCE (
+            DIVIDE (
+                SUMX (
+                    Paired,
+                    Fact_CountryYear[PopulationTotal]
+                ),
+                [Population Total]
+            ),
+            0
+        )
+    )
+
+// Personnes à au moins basique sans service sûr, cohorte comparable
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Modernization Need People =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
+            SelectedYear,
+            INTEGER
+        )
+    )
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Paired =
+    FILTER (
+        Eligible,
+        Fact_CountryYear[PopulationTotal] > 0 && NOT ISBLANK (Fact_CountryYear[BasicTotal]) && NOT ISBLANK (Fact_CountryYear[SafeTotal])
+    )
+RETURN
+    SUMX (
+        Paired,
+        ( Fact_CountryYear[BasicTotal] - Fact_CountryYear[SafeTotal]) * Fact_CountryYear[PopulationTotal]
+    )
+
+// Classement exploratoire selon le besoin absolu, ne remplace pas une étude terrain
+// Dépendances : Creation Need People
+Creation Rank =
+IF (
+    HASONEVALUE (Dim_Country[Country]) && NOT ISBLANK ([Creation Need People]),
+    RANKX (
+        ALLSELECTED (Dim_Country[Country]),
+        [Creation Need People],
+        ,
+        DESC,
+        DENSE
+    )
+)
+
+// Indicateur complémentaire du périmètre sélectionné
+// Dépendances : Basic Access Total, Urban Population Share
+Creation Point Visible =
+IF (
+    HASONEVALUE (Dim_Country[Country]) && NOT ISBLANK ([Basic Access Total]) && NOT ISBLANK ([Urban Population Share]),
+    1,
+    0
+)
+
+// Indicateur complémentaire du périmètre sélectionné
+// Dépendances : Basic Access Comparable, Safe Access Comparable
+Modernization Point Visible =
+IF (
+    HASONEVALUE (Dim_Country[Country]) && NOT ISBLANK ([Basic Access Comparable]) && NOT ISBLANK ([Safe Access Comparable]),
+    1,
+    0
+)
+
+// Indicateur complémentaire du périmètre sélectionné
+// Dépendances : Access Health Profile Score, Political Stability Mean
+Consulting Point Visible =
+IF (
+    HASONEVALUE (Dim_Country[Country]) && NOT ISBLANK ([Access Health Profile Score]) && NOT ISBLANK ([Political Stability Mean]),
+    1,
+    0
+)
+
+// Top 10 selon le besoin absolu positif, égalités départagées par le nom du pays. Aucun budget ni score de faisabilité supposé
+// Dépendances : Creation Need People
+Creation Top 10 People =
+VAR Need = [Creation Need People]
+VAR Candidates =
+    FILTER (
+        ALLSELECTED (Dim_Country[Country]),
+        NOT ISBLANK ([Creation Need People]) && [Creation Need People] > 0
+    )
+VAR TopCountries =
+    TOPN (
+        10,
+        Candidates,
+        [Creation Need People],
+        DESC,
+        Dim_Country[Country],
+        ASC
+    )
+RETURN
+    IF (
+        HASONEVALUE (Dim_Country[Country]) && NOT ISBLANK (Need) && Need > 0 &&
+        CONTAINS (
+            TopCountries,
+            Dim_Country[Country],
+            SELECTEDVALUE (Dim_Country[Country])
+        ),
+        Need
+    )
+
+// Top 10 selon le besoin absolu positif, égalités départagées par le nom du pays. Aucun budget ni score de faisabilité supposé
+// Dépendances : Modernization Need People
+Modernization Top 10 People =
+VAR Need = [Modernization Need People]
+VAR Candidates =
+    FILTER (
+        ALLSELECTED (Dim_Country[Country]),
+        NOT ISBLANK ([Modernization Need People]) && [Modernization Need People] > 0
+    )
+VAR TopCountries =
+    TOPN (
+        10,
+        Candidates,
+        [Modernization Need People],
+        DESC,
+        Dim_Country[Country],
+        ASC
+    )
+RETURN
+    IF (
+        HASONEVALUE (Dim_Country[Country]) && NOT ISBLANK (Need) && Need > 0 &&
+        CONTAINS (
+            TopCountries,
+            Dim_Country[Country],
+            SELECTEDVALUE (Dim_Country[Country])
+        ),
+        Need
+    )
+
+// Contexte des filtres de la page Priorités, ne transforme pas une estimation de besoin en recommandation d’investissement
+// Dépendances : Analysis Year, Countries Included, Stability Filter Label
+Priority Scope Label =
+VAR Included = [Countries Included]
+RETURN
+    IF (
+        ISBLANK ([Analysis Year]),
+        "Choisir une seule année",
+        IF (
+Included = 0,
+"Aucun pays admissible : ajuster le périmètre ou le seuil de stabilité",
+FORMAT (Included, "0") & " pays admissibles · " & [Stability Filter Label] & " · Besoins estimés sur les pays renseignés"
+)
+)
+
+// Charge positive : rose ; charge nulle observée : vert ; absence : gris
+// Dépendances : Creation Need People
+UI Creation Need Color =
+VAR __MetricValue = [Creation Need People]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK (__MetricValue),
+        "#94A3B8",
+        __MetricValue > 0,
+        "#FB7185",
+__MetricValue = 0,
+"#34D399",
+"#94A3B8"
+)
+
+// Charge positive : rose ; charge nulle observée : vert, absence : gris
+// Dépendances : Modernization Need People
+UI Modernization Need Color =
+VAR __MetricValue = [Modernization Need People]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK (__MetricValue),
+        "#94A3B8",
+        __MetricValue > 0,
+        "#FB7185",
+__MetricValue = 0,
+"#34D399",
+"#94A3B8"
+)

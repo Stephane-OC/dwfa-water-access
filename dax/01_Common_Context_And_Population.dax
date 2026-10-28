@@ -4,7 +4,7 @@
 // ÉTAPE   : 1 — Monde · Synthèse et Monde · Carte
 // OBJECTIF: Ajouter les calculs nécessaires à cette étape du rapport
 // CRÉATION: Créer chaque mesure séparément, de haut en bas
-// PRÉREQUIS: Fichiers 00 à 00 déjà appliqués ; modèle Power Query chargé
+// PRÉREQUIS: Les deux fichiers 00 déjà appliqués ; modèle Power Query chargé
 // ============================================================================
 
 // Une seule année requise pour les KPI, sur une courbe, chaque point définit son année
@@ -13,10 +13,13 @@ Analysis Year =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 RETURN
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 
 // Indicateur complémentaire du périmètre sélectionné.
 // Dépendances : Colonnes et paramètres du modèle Power Query.
@@ -50,10 +53,13 @@ Population Total =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -87,10 +93,13 @@ Population Urban =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -124,10 +133,13 @@ Population Rural =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -161,10 +173,13 @@ Urban Population Share =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -209,10 +224,13 @@ Countries Included =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])
 VAR Y =
-    IF (NOT ISBLANK (SelectedYear), CONVERT (
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
             SelectedYear,
             INTEGER
-        ))
+        )
+    )
 VAR Cutoff =
     CONVERT (
         SELECTEDVALUE (
@@ -248,3 +266,15 @@ IF (
     1,
     0
 )
+
+// Nombre de pays du classement ; sélection 5 ou 10, valeur par défaut 10
+// Dépendances : Param_PriorityTopN[TopN]
+Priority Top N =
+VAR Choice =
+    SELECTEDVALUE (
+        Param_PriorityTopN[TopN],
+        10
+    )
+RETURN
+    IF (Choice IN {
+            5, 10}, Choice, 10)

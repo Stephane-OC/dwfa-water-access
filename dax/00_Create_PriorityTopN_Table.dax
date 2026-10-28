@@ -1,0 +1,8 @@
+// ============================================================================
+// TABLE   : Param_PriorityTopN
+// OBJECTIF: Choisir un Top 5 ou un Top 10 pour les priorités sanitaires
+// CRÉATION: Modélisation > Nouvelle table ; une seule fois avant le fichier 01
+// ============================================================================
+
+// Laisser la table sans relation ; TopN en nombre entier, sans synthèse et au format 0
+Param_PriorityTopN = DATATABLE ( "TopN", INTEGER, { { 5 }, { 10 } } )

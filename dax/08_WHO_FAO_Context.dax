@@ -1,0 +1,629 @@
+// ============================================================================
+// MESURES : Contexte OMS / FAO
+// TABLE   : _Measures
+// ÉTAPE   : 5 — Contexte OMS / FAO
+// OBJECTIF: Ajouter les calculs nécessaires à cette étape du rapport
+// CRÉATION: Créer chaque mesure séparément, de haut en bas
+// PRÉREQUIS: Fichiers 00 à 07 déjà appliqués ; modèle Power Query chargé
+// ============================================================================
+
+// Moyenne pondérée par la population du brief, uniquement sur les pays renseignés, nouvelle édition OMS/UNICEF, pas un agrégat officiel OMS
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Sanitation Basic Access Total =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
+            SelectedYear,
+            INTEGER
+        )
+    )
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Observed =
+    FILTER (
+        Eligible,
+        NOT ISBLANK (Fact_CountryYear[SanitationBasicTotal]) && Fact_CountryYear[PopulationTotal] > 0
+    )
+RETURN
+    DIVIDE (
+        SUMX (
+            Observed,
+            Fact_CountryYear[PopulationTotal] * Fact_CountryYear[SanitationBasicTotal]
+        ),
+        SUMX (
+            Observed,
+            Fact_CountryYear[PopulationTotal]
+        )
+    )
+
+// Pays avec taux renseigné et population positive, selon le filtre de stabilité
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Sanitation Countries Covered =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
+            SelectedYear,
+            INTEGER
+        )
+    )
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Observed =
+    FILTER (
+        Eligible,
+        NOT ISBLANK (Fact_CountryYear[SanitationBasicTotal]) && Fact_CountryYear[PopulationTotal] > 0
+    )
+RETURN
+    COALESCE (
+        COUNTROWS (Observed),
+        0
+    )
+
+// Couverture du taux pondéré ; une absence n’est pas un accès nul
+// Dépendances : Population Total
+Sanitation Population Coverage =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
+            SelectedYear,
+            INTEGER
+        )
+    )
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Observed =
+    FILTER (
+        Eligible,
+        NOT ISBLANK (Fact_CountryYear[SanitationBasicTotal]) && Fact_CountryYear[PopulationTotal] > 0
+    )
+RETURN
+    IF (
+        [Population Total] > 0,
+        DIVIDE (
+            COALESCE (
+                SUMX (
+                    Observed,
+                    Fact_CountryYear[PopulationTotal]
+                ),
+                0
+            ),
+            [Population Total]
+        )
+    )
+
+// Moyenne pondérée par la population du brief, uniquement sur les pays renseignés, nouvelle édition OMS/UNICEF, pas un agrégat officiel OMS
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Hygiene Basic Access Total =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
+            SelectedYear,
+            INTEGER
+        )
+    )
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Observed =
+    FILTER (
+        Eligible,
+        NOT ISBLANK (Fact_CountryYear[HygieneBasicTotal]) && Fact_CountryYear[PopulationTotal] > 0
+    )
+RETURN
+    DIVIDE (
+        SUMX (
+            Observed,
+            Fact_CountryYear[PopulationTotal] * Fact_CountryYear[HygieneBasicTotal]
+        ),
+        SUMX (
+            Observed,
+            Fact_CountryYear[PopulationTotal]
+        )
+    )
+
+// Pays avec taux renseigné et population positive, selon le filtre de stabilité
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Hygiene Countries Covered =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
+            SelectedYear,
+            INTEGER
+        )
+    )
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Observed =
+    FILTER (
+        Eligible,
+        NOT ISBLANK (Fact_CountryYear[HygieneBasicTotal]) && Fact_CountryYear[PopulationTotal] > 0
+    )
+RETURN
+    COALESCE (
+        COUNTROWS (Observed),
+        0
+    )
+
+// Couverture du taux pondéré, une absence n’est pas un accès nul
+// Dépendances : Population Total
+Hygiene Population Coverage =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
+            SelectedYear,
+            INTEGER
+        )
+    )
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Observed =
+    FILTER (
+        Eligible,
+        NOT ISBLANK (Fact_CountryYear[HygieneBasicTotal]) && Fact_CountryYear[PopulationTotal] > 0
+    )
+RETURN
+    IF (
+        [Population Total] > 0,
+        DIVIDE (
+            COALESCE (
+                SUMX (
+                    Observed,
+                    Fact_CountryYear[PopulationTotal]
+                ),
+                0
+            ),
+            [Population Total]
+        )
+    )
+
+// Superficie terrestre FAO en km², uniquement pour les pays avec population positive du même millésime
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Land Area Covered Km2 =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
+            SelectedYear,
+            INTEGER
+        )
+    )
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Observed =
+    FILTER (
+        Eligible,
+        Fact_CountryYear[LandAreaKm2] > 0 && Fact_CountryYear[PopulationTotal] > 0
+    )
+RETURN
+    SUMX (
+        Observed,
+        Fact_CountryYear[LandAreaKm2]
+    )
+
+// Personnes par km² terrestre ; au niveau agrégé, ratio des sommes sur une cohorte commune, pas moyenne des densités. Rapprochement territorial à interpréter avec prudence
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Population Density Covered =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
+            SelectedYear,
+            INTEGER
+        )
+    )
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Observed =
+    FILTER (
+        Eligible,
+        Fact_CountryYear[LandAreaKm2] > 0 && Fact_CountryYear[PopulationTotal] > 0
+    )
+RETURN
+    DIVIDE (
+        SUMX (
+            Observed,
+            Fact_CountryYear[PopulationTotal]
+        ),
+        SUMX (
+            Observed,
+            Fact_CountryYear[LandAreaKm2]
+        )
+    )
+
+// Pays disposant d’une superficie et d’une population positives pour l’année sélectionnée
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Density Countries Covered =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
+            SelectedYear,
+            INTEGER
+        )
+    )
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Observed =
+    FILTER (
+        Eligible,
+        Fact_CountryYear[LandAreaKm2] > 0 && Fact_CountryYear[PopulationTotal] > 0
+    )
+RETURN
+    COALESCE (
+        COUNTROWS (Observed),
+        0
+    )
+
+// Population couverte par le calcul de densité ; ne suppose aucune superficie manquante
+// Dépendances : Population Total
+Density Population Coverage =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (
+        NOT ISBLANK (SelectedYear),
+        CONVERT (
+            SelectedYear,
+            INTEGER
+        )
+    )
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Observed =
+    FILTER (
+        Eligible,
+        Fact_CountryYear[LandAreaKm2] > 0 && Fact_CountryYear[PopulationTotal] > 0
+    )
+RETURN
+    IF (
+        [Population Total] > 0,
+        DIVIDE (
+            COALESCE (
+                SUMX (
+                    Observed,
+                    Fact_CountryYear[PopulationTotal]
+                ),
+                0
+            ),
+            [Population Total]
+        )
+    )
+
+// Statut de disponibilité au grain pays–année
+// Dépendances : Eligible Country, Sanitation Basic Access Total
+Sanitation Data Status =
+IF (
+    [Eligible Country] = 1,
+    IF (ISBLANK ([Sanitation Basic Access Total]), "Absente", "Disponible")
+)
+
+// Statut de disponibilité au grain pays–année
+// Dépendances : Eligible Country, Hygiene Basic Access Total
+Hygiene Data Status =
+IF (
+    [Eligible Country] = 1,
+    IF (ISBLANK ([Hygiene Basic Access Total]), "Absente", "Disponible")
+)
+
+// Statut de disponibilité au grain pays–année
+// Dépendances : Eligible Country, Land Area Covered Km2
+Land Area Data Status =
+IF (
+    [Eligible Country] = 1,
+    IF (ISBLANK ([Land Area Covered Km2]), "Absente", "Disponible")
+)
+
+// Année des observations et couverture recalculées selon les filtres ; édition des fichiers source documentée séparément
+// Dépendances : Analysis Year, Density Population Coverage, Hygiene Population Coverage, Sanitation Population Coverage
+External Context Label =
+VAR Y = [Analysis Year]
+RETURN
+    IF (
+        ISBLANK (Y),
+        "Choisir une seule année",
+        "Couverture population : assainissement " & FORMAT ([Sanitation Population Coverage], "0.0%") &
+        " · hygiène " & FORMAT ([Hygiene Population Coverage], "0.0%") &
+        " · densité " & FORMAT ([Density Population Coverage], "0.0%") &
+        " | Compléments OMS / FAO : " & FORMAT (Y, "0") & " · cohortes disponibles"
+    )
+
+// Valeur disponible : accent thématique. Valeur absente : gris
+// Dépendances : Sanitation Basic Access Total
+UI Sanitation Color =
+VAR __MetricValue = [Sanitation Basic Access Total]
+RETURN
+    IF (ISBLANK (__MetricValue), "#94A3B8", "#34D399")
+
+// Valeur disponible : accent thématique. Valeur absente : gris.
+// Dépendances : Hygiene Basic Access Total
+UI Hygiene Color =
+VAR __MetricValue = [Hygiene Basic Access Total]
+RETURN
+    IF (ISBLANK (__MetricValue), "#94A3B8", "#34D399")
+
+// Valeur disponible : accent thématique. Valeur absente : gris
+// Dépendances : Population Density Covered
+UI Density Color =
+VAR __MetricValue = [Population Density Covered]
+RETURN
+    IF (ISBLANK (__MetricValue), "#94A3B8", "#A78BFA")
+
+// Valeur disponible : accent thématique. Valeur absente : gris
+// Dépendances : Land Area Covered Km2
+UI Land Area Color =
+VAR __MetricValue = [Land Area Covered Km2]
+RETURN
+    IF (ISBLANK (__MetricValue), "#94A3B8", "#2ED3E6")
+
+// Couverture complète : vert, partielle : ambre, nulle observée : rose ; absence : gris
+// Dépendances : Sanitation Population Coverage
+UI Sanitation Coverage Color =
+VAR __MetricValue = [Sanitation Population Coverage]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK (__MetricValue),
+        "#94A3B8",
+        __MetricValue >= 1 - 0.000000001,
+        "#34D399",
+        __MetricValue > 0,
+        "#FBBF24",
+        "#FB7185"
+    )
+
+// Couverture complète : vert ; partielle : ambre, nulle observée : rose ; absence : gris
+// Dépendances : Hygiene Population Coverage
+UI Hygiene Coverage Color =
+VAR __MetricValue = [Hygiene Population Coverage]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK (__MetricValue),
+        "#94A3B8",
+        __MetricValue >= 1 - 0.000000001,
+        "#34D399",
+        __MetricValue > 0,
+        "#FBBF24",
+        "#FB7185"
+    )
+
+// Donnée disponible : vert ; absence explicitement signalée : rose, hors périmètre : gris
+// Dépendances : Sanitation Data Status
+UI Sanitation Status Color =
+VAR __MetricValue = [Sanitation Data Status]
+RETURN
+    SWITCH (
+        __MetricValue,
+        "Disponible",
+        "#34D399",
+        "Absente",
+        "#FB7185",
+        "#94A3B8"
+    )
+
+// Donnée disponible : vert ; absence explicitement signalée : rose, hors périmètre : gris
+// Dépendances : Hygiene Data Status
+UI Hygiene Status Color =
+VAR __MetricValue = [Hygiene Data Status]
+RETURN
+    SWITCH (
+        __MetricValue,
+        "Disponible",
+        "#34D399",
+        "Absente",
+        "#FB7185",
+        "#94A3B8"
+    )

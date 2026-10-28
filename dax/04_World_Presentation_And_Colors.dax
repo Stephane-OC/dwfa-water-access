@@ -7,7 +7,7 @@
 // PRÉREQUIS: Fichiers 00 à 03 déjà appliqués ; modèle Power Query chargé
 // ============================================================================
 
-// Libellé du périmètre sélectionné.
+// Libellé du périmètre sélectionné
 // Dépendances : Analysis Year
 Year Label =
 IF (
@@ -25,7 +25,7 @@ IF (
     "Mortalité WASH : donnée disponible uniquement en 2016"
 )
 
-// Libellé du périmètre sélectionné.
+// Libellé du périmètre sélectionné
 // Dépendances : Analysis Year, Basic Countries Covered, Basic Population Coverage, Countries Included
 Basic Coverage Label =
 VAR Y = [Analysis Year]
@@ -77,7 +77,7 @@ Covered = 0,
 "Couverture accès sûr : " & FORMAT (Covered, "0") & " pays, " & FORMAT ([Safe Population Coverage], "0.0%") & " de la population du périmètre"
 )
 
-// Libellé du périmètre sélectionné.
+// Libellé du périmètre sélectionné
 // Dépendances : Stability Filter Enabled, Stability Minimum
 Stability Filter Label =
 IF (
@@ -231,4 +231,59 @@ RETURN
         __MetricValue > 0,
         "#FBBF24",
         "#FB7185"
+    )
+
+// Nom du pays dans l’infobulle ; une mesure évite d’ajouter une catégorie dans la légende de la carte
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Health Priority Country Label =
+SELECTEDVALUE (Dim_Country[Country])
+
+// Titre du Top selon le périmètre et l’année ; aucun report de la mortalité de 2016 sur les autres années
+// Dépendances : Analysis Year, Priority Top N
+Health Priority Scope Label =
+VAR Y = [Analysis Year]
+VAR ScopeName =
+    SWITCH (
+        TRUE (),
+        ISFILTERED (Dim_Country[WHORegion]),
+        SELECTEDVALUE (
+            Dim_Country[WHORegion],
+            "Plusieurs régions OMS"
+        ),
+        ISFILTERED (Dim_Country[Continent]),
+        SELECTEDVALUE (
+            Dim_Country[Continent],
+            "Plusieurs continents"
+        ),
+        "Monde"
+    )
+RETURN
+    IF (
+        ISBLANK (Y),
+        "Choisir une seule année",
+        IF (
+            Y <> 2016,
+            "Classement sanitaire indisponible pour " & FORMAT (Y, "0") & " — sélectionner 2016",
+            "Top " & FORMAT ([Priority Top N], "0") & " sanitaire · " & ScopeName & " · 2016"
+        )
+    )
+
+// Bandeau de lecture ; pays classables, filtre de stabilité et données manquantes
+// Dépendances : Analysis Year, Stability Filter Enabled, Stability Minimum, Health Priority Excluded Stability Count, Health Priority Unknown Stability Count, Health Priority Candidate Count, Health Priority Missing Mortality Count
+Health Priority Status Label =
+VAR Y = [Analysis Year]
+VAR ModeLabel =
+    IF (
+        [Stability Filter Enabled] = 1,
+        "Stabilité ≥ " & FORMAT ([Stability Minimum], "0.0") &
+        " · " & FORMAT ([Health Priority Excluded Stability Count], "0") & " pays sous le seuil" &
+        " · " & FORMAT ([Health Priority Unknown Stability Count], "0") & " sans indice, exclus",
+        "Sans filtre de stabilité · " & FORMAT ([Health Priority Unknown Stability Count], "0") & " indices absents, non exclus"
+    )
+RETURN
+    IF (
+        Y <> 2016 || ISBLANK (Y),
+        "La mortalité du projet est disponible uniquement en 2016. Aucun classement sanitaire n’est calculé hors 2016.",
+        FORMAT ([Health Priority Candidate Count], "0") & " pays classables · " & ModeLabel &
+        " · " & FORMAT ([Health Priority Missing Mortality Count], "0") & " pays admissibles sans mortalité"
     )

@@ -1,0 +1,425 @@
+// ============================================================================
+// MESURES : Qualité des données
+// TABLE   : _Measures
+// ÉTAPE   : 3 — Qualité des données
+// OBJECTIF: Ajouter les calculs nécessaires à cette étape du rapport
+// CRÉATION: Créer chaque mesure séparément, de haut en bas
+// PRÉREQUIS: Fichiers 00 à 05 déjà appliqués ; modèle Power Query chargé
+// ============================================================================
+
+// Écart relatif de ventilation en points ; données de population conservées telles que fournies.
+// Dépendances : Population Rural, Population Total, Population Urban
+Population Ventilation Gap pp =
+DIVIDE (
+    [Population Urban] + [Population Rural] - [Population Total],
+    [Population Total]
+) * 100
+
+// Indicateur complémentaire du périmètre sélectionné
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Stability Countries Covered =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (NOT ISBLANK (SelectedYear), CONVERT (
+            SelectedYear,
+            INTEGER
+        ))
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+RETURN
+    COALESCE (
+        COUNTROWS (
+            FILTER (
+                Eligible,
+                NOT ISBLANK (Fact_CountryYear[PoliticalStability])
+            )
+        ),
+        0
+    )
+
+// Indicateur complémentaire du périmètre sélectionné
+// Dépendances : Population Total
+Mortality Population Coverage =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (NOT ISBLANK (SelectedYear), CONVERT (
+            SelectedYear,
+            INTEGER
+        ))
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+VAR Available =
+    FILTER (
+        Eligible,
+        NOT ISBLANK (Fact_CountryYear[MortalityRate]) && Fact_CountryYear[PopulationTotal] > 0
+    )
+RETURN
+    IF (
+        [Population Total] > 0,
+        COALESCE (
+            DIVIDE (
+                SUMX (
+                    Available,
+                    Fact_CountryYear[PopulationTotal]
+                ),
+                [Population Total]
+            ),
+            0
+        )
+    )
+
+// Indicateur complémentaire du périmètre sélectionné
+// Dépendances : Colonnes et paramètres du modèle Power Query
+Mortality Countries Covered =
+VAR SelectedYear =
+    SELECTEDVALUE (Dim_Year[Year])
+VAR Y =
+    IF (NOT ISBLANK (SelectedYear), CONVERT (
+            SelectedYear,
+            INTEGER
+        ))
+VAR Cutoff =
+    CONVERT (
+        SELECTEDVALUE (
+            Param_Stability[Minimum],
+            -2.5
+        ),
+        DOUBLE
+    )
+VAR ApplyFilter =
+    SELECTEDVALUE (
+        Param_StabilityMode[Mode],
+        "Tous les pays"
+    ) = "Appliquer le seuil"
+VAR Eligible =
+    FILTER (
+        Fact_CountryYear,
+        NOT ISBLANK (Y) && Fact_CountryYear[Year] =
+        Y &&
+        ( NOT (ApplyFilter) || ( NOT ISBLANK (Fact_CountryYear[PoliticalStability]) && Fact_CountryYear[PoliticalStability] >=
+                Cutoff))
+    )
+RETURN
+    COALESCE (
+        COUNTROWS (
+            FILTER (
+                Eligible,
+                NOT ISBLANK (Fact_CountryYear[MortalityRate]) && Fact_CountryYear[PopulationTotal] > 0
+            )
+        ),
+        0
+    )
+
+// Part des pays admissibles disposant de l’indicateur exploitable ; pour eau et mortalité, une population positive est requise
+// Dépendances : Basic Countries Covered, Countries Included
+Basic Country Coverage =
+DIVIDE (COALESCE (
+        [Basic Countries Covered],
+        0
+    ), [Countries Included])
+
+// Part des pays admissibles disposant de l’indicateur exploitable ; pour eau et mortalité, une population positive est requise
+// Dépendances : Countries Included, Safe Countries Covered
+Safe Country Coverage =
+DIVIDE (COALESCE (
+        [Safe Countries Covered],
+        0
+    ), [Countries Included])
+
+// Part des pays admissibles disposant de l’indicateur exploitable ; pour eau et mortalité, une population positive est requise
+// Dépendances : Countries Included, Mortality Countries Covered
+Mortality Country Coverage =
+DIVIDE (COALESCE (
+        [Mortality Countries Covered],
+        0
+    ), [Countries Included])
+
+// Part des pays admissibles disposant de l’indicateur exploitable ; pour eau et mortalité, une population positive est requise
+// Dépendances : Countries Included, Stability Countries Covered
+Stability Country Coverage =
+DIVIDE (COALESCE (
+        [Stability Countries Covered],
+        0
+    ), [Countries Included])
+
+// Disponibilité de l’indicateur utilisé par le rapport au grain pays année, une valeur nulle différente de BLANK est disponible
+// Dépendances : Eligible Country, Population Total
+Population Data Status =
+IF (
+    [Eligible Country] = 1,
+    IF (ISBLANK ([Population Total]), "Absente", "Disponible")
+)
+
+// Disponibilité de l’indicateur utilisé par le rapport au grain pays année, une valeur nulle différente de BLANK est disponible
+// Dépendances : Basic Access Total, Eligible Country
+Basic Data Status =
+IF (
+    [Eligible Country] = 1,
+    IF (ISBLANK ([Basic Access Total]), "Absente", "Disponible")
+)
+
+// Disponibilité de l’indicateur utilisé par le rapport au grain pays année, une valeur nulle différente de BLANK est disponible
+// Dépendances : Eligible Country, Safe Access Total
+Safe Data Status =
+IF (
+    [Eligible Country] = 1,
+    IF (ISBLANK ([Safe Access Total]), "Absente", "Disponible")
+)
+
+// Disponibilité de l’indicateur utilisé par le rapport au grain pays année, une valeur nulle différente de BLANK est disponible
+// Dépendances : Eligible Country, Mortality Rate Weighted
+Mortality Data Status =
+IF (
+    [Eligible Country] = 1,
+    IF (ISBLANK ([Mortality Rate Weighted]), "Absente", "Disponible")
+)
+
+// Disponibilité de l’indicateur utilisé par le rapport au grain pays année, une valeur nulle différente de BLANK est disponible.
+// Dépendances : Eligible Country, Political Stability Mean
+Stability Data Status =
+IF (
+    [Eligible Country] = 1,
+    IF (ISBLANK ([Political Stability Mean]), "Absente", "Disponible")
+)
+
+// Audit descriptif urbain + rural versus total, seuil 1 %, sans équilibrer les séries sources
+// Dépendances : Eligible Country, Population Rural, Population Total, Population Urban
+Population Consistency Status =
+VAR Total = [Population Total]
+VAR Urban = [Population Urban]
+VAR Rural = [Population Rural]
+RETURN
+    IF (
+        [Eligible Country] = 1,
+        SWITCH (
+            TRUE (),
+            ISBLANK (Total) || Total <= 0,
+            "Total absent",
+            ISBLANK (Urban) || ISBLANK (Rural),
+            "Ventilation incomplète",
+            ABS (
+                DIVIDE (Urban + Rural - Total, Total)
+            ) > 0.01,
+            "Écart > 1 %",
+            "Écart ≤ 1 %"
+        )
+    )
+
+// Explique la couverture du service sûr et la distinction entre absence et valeur zéro
+// Dépendances : Analysis Year, Countries Included, Safe Countries Covered
+Quality Summary Label =
+VAR Included = [Countries Included]
+VAR Covered =
+    COALESCE (
+        [Safe Countries Covered],
+        0
+    )
+RETURN
+    IF (
+        ISBLANK ([Analysis Year]),
+        "Choisir une seule année",
+        IF (
+Included = 0,
+"Aucun pays dans le périmètre sélectionné",
+FORMAT (Included - Covered, "0") & " pays sans indicateur de service sûr exploitable · Une donnée absente ne vaut jamais 0 % d’accès"
+)
+)
+
+// Valeur disponible : accent thématique. Valeur absente : gris
+// Dépendances : Countries Included
+UI Countries Color =
+VAR __MetricValue = [Countries Included]
+RETURN
+    IF (ISBLANK (__MetricValue), "#94A3B8", "#2ED3E6")
+
+// Tous les pays du périmètre renseignés : vert ; couverture partielle : ambre ; aucun : rose
+// Dépendances : Analysis Year, Basic Countries Covered, Countries Included
+UI Basic Countries Color =
+VAR __MetricValue = [Basic Countries Covered]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK ([Analysis Year]) || ISBLANK (__MetricValue),
+        "#94A3B8",
+__MetricValue = [Countries Included] && __MetricValue > 0,
+"#34D399",
+__MetricValue > 0,
+"#FBBF24",
+"#FB7185"
+)
+
+// Tous les pays du périmètre renseignés : vert, couverture partielle : ambre ; aucun : rose
+// Dépendances : Analysis Year, Countries Included, Safe Countries Covered
+UI Safe Countries Color =
+VAR __MetricValue = [Safe Countries Covered]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK ([Analysis Year]) || ISBLANK (__MetricValue),
+        "#94A3B8",
+__MetricValue = [Countries Included] && __MetricValue > 0,
+"#34D399",
+__MetricValue > 0,
+"#FBBF24",
+"#FB7185"
+)
+
+// Tous les pays du périmètre renseignés : vert, couverture partielle : ambre, aucun : rose
+// Dépendances : Analysis Year, Countries Included, Mortality Countries Covered
+UI Mortality Countries Color =
+VAR __MetricValue = [Mortality Countries Covered]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK ([Analysis Year]) || ISBLANK (__MetricValue),
+        "#94A3B8",
+__MetricValue = [Countries Included] && __MetricValue > 0,
+"#34D399",
+__MetricValue > 0,
+"#FBBF24",
+"#FB7185"
+)
+
+// Tous les pays du périmètre renseignés : vert ; couverture partielle : ambre, aucun : rose
+// Dépendances : Analysis Year, Countries Included, Stability Countries Covered
+UI Stability Countries Color =
+VAR __MetricValue = [Stability Countries Covered]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK ([Analysis Year]) || ISBLANK (__MetricValue),
+        "#94A3B8",
+__MetricValue = [Countries Included] && __MetricValue > 0,
+"#34D399",
+__MetricValue > 0,
+"#FBBF24",
+"#FB7185"
+)
+
+// Donnée disponible : vert ; absence explicitement signalée : rose, hors périmètre : gris
+// Dépendances : Population Data Status
+UI Population Status Color =
+VAR __MetricValue = [Population Data Status]
+RETURN
+    SWITCH (
+        __MetricValue,
+        "Disponible",
+        "#34D399",
+        "Absente",
+        "#FB7185",
+        "#94A3B8"
+    )
+
+// Donnée disponible : vert ; absence explicitement signalée : rose, hors périmètre : gris
+// Dépendances : Basic Data Status
+UI Basic Status Color =
+VAR __MetricValue = [Basic Data Status]
+RETURN
+    SWITCH (
+        __MetricValue,
+        "Disponible",
+        "#34D399",
+        "Absente",
+        "#FB7185",
+        "#94A3B8"
+    )
+
+// Donnée disponible : vert ; absence explicitement signalée : rose, hors périmètre : gris
+// Dépendances : Safe Data Status
+UI Safe Status Color =
+VAR __MetricValue = [Safe Data Status]
+RETURN
+    SWITCH (
+        __MetricValue,
+        "Disponible",
+        "#34D399",
+        "Absente",
+        "#FB7185",
+        "#94A3B8"
+    )
+
+// Donnée disponible : vert ; absence explicitement signalée : rose, hors périmètre : gris
+// Dépendances : Mortality Data Status
+UI Mortality Status Color =
+VAR __MetricValue = [Mortality Data Status]
+RETURN
+    SWITCH (
+        __MetricValue,
+        "Disponible",
+        "#34D399",
+        "Absente",
+        "#FB7185",
+        "#94A3B8"
+    )
+
+// Donnée disponible : vert ; absence explicitement signalée : rose ; hors périmètre : gris
+// Dépendances : Stability Data Status
+UI Stability Status Color =
+VAR __MetricValue = [Stability Data Status]
+RETURN
+    SWITCH (
+        __MetricValue,
+        "Disponible",
+        "#34D399",
+        "Absente",
+        "#FB7185",
+        "#94A3B8"
+    )
+
+// Contrôle de ventilation : cohérent vert, écart rose, ventilation incomplète ambre
+// Dépendances : Population Consistency Status
+UI Population Consistency Color =
+VAR __MetricValue = [Population Consistency Status]
+RETURN
+    SWITCH (
+        __MetricValue,
+        "Écart ≤ 1 %",
+        "#34D399",
+        "Écart > 1 %",
+        "#FB7185",
+        "Ventilation incomplète",
+        "#FBBF24",
+        "Total absent",
+        "#FB7185",
+        "#94A3B8"
+    )
