@@ -1,7 +1,7 @@
 // ============================================================================
 // TABLE   : _Measures
 // OBJECTIF: Centraliser les mesures du rapport dans une table technique
-// CRÉATION: Modélisation > Nouvelle table ; une seule fois avant le fichier 01
+// CRÉATION: Modélisation > Nouvelle table ; une seule fois avant le fichier 01 
 // ============================================================================
 
 // Masquer _Placeholder et laisser la table sans relation

@@ -4,7 +4,7 @@
 // ÉTAPE   : 1 — Monde · Synthèse et Monde · Carte
 // OBJECTIF: Ajouter les calculs nécessaires à cette étape du rapport
 // CRÉATION: Créer chaque mesure séparément, de haut en bas
-// PRÉREQUIS: Fichiers 00 à 03 déjà appliqués ; modèle Power Query chargé
+// PRÉREQUIS: Fichiers 00 à 03 déjà appliqués ; modèle Power Query chargé 
 // ============================================================================
 
 // Libellé du périmètre sélectionné

@@ -4,7 +4,7 @@
 // ÉTAPE   : 1 — Monde · Synthèse et Monde · Carte
 // OBJECTIF: Ajouter les indicateurs santé et le classement sanitaire Top 5 / Top 10
 // CRÉATION: Créer chaque mesure séparément, de haut en bas
-// PRÉREQUIS: Fichiers 00 à 02 déjà appliqués ; modèle Power Query chargé
+// PRÉREQUIS: Fichiers 00 à 02 déjà appliqués ; modèle Power Query chargé 
 // ============================================================================
 
 // Moyenne simple des pays renseignés ; un pays = une voix, indicateur non démographique

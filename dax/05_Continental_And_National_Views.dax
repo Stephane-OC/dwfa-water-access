@@ -4,7 +4,7 @@
 // ÉTAPE   : 2 — Vue continentale et Vue nationale
 // OBJECTIF: Ajouter les calculs nécessaires à cette étape du rapport
 // CRÉATION: Créer chaque mesure séparément, de haut en bas
-// PRÉREQUIS: Fichiers 00 à 04 déjà appliqués, modèle Power Query chargé
+// PRÉREQUIS: Fichiers 00 à 04 déjà appliqués, modèle Power Query chargé 
 // ============================================================================
 
 // Moyenne pondérée ; seuls les pays avec taux et population du milieu participent

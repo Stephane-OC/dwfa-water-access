@@ -48,7 +48,7 @@ CONVERT (
 )
 
 // Population source en personnes ; année unique et seuil éventuel
-// Dépendances : Colonnes et paramètres du modèle Power Query
+// Dépendances : Colonnes et paramètres du modèle Power Query 
 Population Total =
 VAR SelectedYear =
     SELECTEDVALUE (Dim_Year[Year])

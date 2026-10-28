@@ -1,4 +1,4 @@
-# DAX DWFA — Accès à l’eau et priorités d’intervention
+# DAX DWFA • Accès à l’eau et priorités d’intervention
 
 ![Bannière DWFA](../assets/images/dwfa_banner.png)
 
@@ -81,7 +81,7 @@ Une donnée absente reste différente d’un zéro observé. Les formules utilis
 
 ### Santé et priorités d’intervention
 
-`Mortality Rate Weighted` exprime un taux de mortalité lié à l’eau, à l’assainissement et à l’hygiène — WASH — pour **100 000 habitants**, pondéré par la population des pays renseignés. `WASH Deaths` additionne les valeurs disponibles de la colonne `WASHDeaths`, affichées dans le rapport comme décès WASH estimés. Le taux et le nombre de décès répondent à des questions différentes.
+`Mortality Rate Weighted` exprime un taux de mortalité lié à l’eau, à l’assainissement et à l’hygiène • WASH • pour **100 000 habitants**, pondéré par la population des pays renseignés. `WASH Deaths` additionne les valeurs disponibles de la colonne `WASHDeaths`, affichées dans le rapport comme décès WASH estimés. Le taux et le nombre de décès répondent à des questions différentes.
 
 La mortalité du projet est disponible **en 2016 uniquement**. Le Top sanitaire ne reporte jamais cette observation sur une autre année.
 
