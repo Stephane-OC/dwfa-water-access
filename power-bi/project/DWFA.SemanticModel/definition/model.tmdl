@@ -11,7 +11,7 @@ annotation __PBI_TimeIntelligenceEnabled = 1
 
 annotation PBI_QueryOrder = ["pDataFolder","fxReadCsv","fxNormalizeCountry","fxAssertUnique","fxPercent","stg_RegionCountry","stg_CountryGeography","stg_Population","stg_Water","stg_Mortality","stg_Stability","Dim_Country","Dim_Year","Fact_CountryYear","QA_MissingData","Param_Stability","Param_StabilityMode","stg_ExternalContext","pExternalSourceMode","pExternalFolder","fxReadZipCsv","src_OMSContext","src_FAOLand","stg_ExternalContextFromSources","fxLatestExternalFile"]
 
-annotation PBI_ProTooling = ["DevMode","TMDLView_Desktop"]
+annotation PBI_ProTooling = ["DevMode","TMDLView_Desktop","DaxQueryView_Desktop"]
 
 ref table Dim_Country
 ref table Dim_Year
@@ -19,6 +19,7 @@ ref table Fact_CountryYear
 ref table Param_Stability
 ref table Param_StabilityMode
 ref table _Measures
+ref table Param_PriorityTopN
 
 ref cultureInfo fr-FR
 

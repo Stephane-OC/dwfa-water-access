@@ -4,5 +4,12 @@
   "displayName": "Monde · Synthèse",
   "displayOption": "FitToPage",
   "height": 1080,
-  "width": 1920
+  "width": 1920,
+  "visualInteractions": [
+    {
+      "source": "6e31f3fe39bc9100d282",
+      "target": "d701ba31770150c2281e",
+      "type": "NoFilter"
+    }
+  ]
 }

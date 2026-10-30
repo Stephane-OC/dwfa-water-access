@@ -1,0 +1,17 @@
+table Param_PriorityTopN
+	lineageTag: bd79f072-da8b-5692-aa79-fdeb8deeb927
+
+	column TopN
+		dataType: int64
+		formatString: 0
+		lineageTag: 4b2f0bea-287d-5362-8561-5456a501b3b4
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [TopN]
+
+		annotation SummarizationSetBy = User
+
+	partition Param_PriorityTopN = calculated
+		mode: import
+		source = DATATABLE ( "TopN", INTEGER, { { 5 }, { 10 } } )
+

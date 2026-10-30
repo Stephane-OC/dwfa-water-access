@@ -966,6 +966,152 @@ table _Measures
 		displayFolder: Présentation visuelle\Disponibilité
 		lineageTag: d8e70c58-9f44-5d58-ab54-10f8df9310aa
 
+	/// Nombre maximal de pays affichés. Une sélection absente ou multiple utilise 10.
+	measure 'Priority Top N' =
+			VAR Choice = SELECTEDVALUE ( Param_PriorityTopN[TopN], 10 )
+			RETURN IF ( Choice IN { 5, 10 }, Choice, 10 )
+		formatString: 0
+		displayFolder: Pilotage
+		lineageTag: 97b48479-cadd-5f86-84ba-3ad67c1eb9dc
+
+	/// Taux de mortalité WASH par pays pour 100 000 habitants, en 2016 uniquement. Respecte le mode et le seuil de stabilité existants.
+	measure 'Health Priority Rate' = IF ( [Analysis Year] = 2016 && HASONEVALUE ( Dim_Country[Country] ), [Mortality Rate Weighted] )
+		formatString: 0.00
+		displayFolder: Priorités sanitaires
+		lineageTag: 57170247-f39e-55cd-9170-c5ccd34b41cb
+
+	/// Rang unique dans la sélection géographique : taux décroissant, décès décroissants puis pays alphabétique. Les taux sont comparés à six décimales pour éviter les écarts flottants. Une mortalité absente ou nulle ne constitue pas une priorité positive.
+	measure 'Health Priority Rank' =
+			VAR CountryName = SELECTEDVALUE ( Dim_Country[Country] )
+			VAR CurrentRate = [Health Priority Rate]
+			VAR RateKey = ROUND ( CurrentRate, 6 )
+			VAR DeathsKey = COALESCE ( [WASH Deaths], -1 )
+			VAR Candidates =
+			    ADDCOLUMNS (
+			        ALLSELECTED ( Dim_Country ),
+			        "__Rate", ROUND ( CALCULATE ( [Health Priority Rate] ), 6 ),
+			        "__Deaths", COALESCE ( CALCULATE ( [WASH Deaths] ), -1 )
+			    )
+			VAR Eligible = FILTER ( Candidates, NOT ISBLANK ( [__Rate] ) && [__Rate] > 0 )
+			VAR Ahead =
+			    FILTER (
+			        Eligible,
+			        [__Rate] > RateKey ||
+			        ( [__Rate] = RateKey && [__Deaths] > DeathsKey ) ||
+			        ( [__Rate] = RateKey && [__Deaths] = DeathsKey && Dim_Country[Country] < CountryName )
+			    )
+			RETURN
+			    IF ( NOT ISBLANK ( CountryName ) && NOT ISBLANK ( CurrentRate ) && CurrentRate > 0,
+			        1 + COUNTROWS ( Ahead ) )
+		formatString: 0
+		displayFolder: Priorités sanitaires
+		lineageTag: 309dbe1e-a775-52d0-bef1-4075e0de339a
+
+	/// Filtre des visuels sanitaires : conserver la valeur 1. Le rang respecte la région ou le continent sélectionné.
+	measure 'Health Priority In Top N' =
+			VAR CountryRank = [Health Priority Rank]
+			RETURN IF ( NOT ISBLANK ( CountryRank ), IF ( CountryRank <= [Priority Top N], 1, 0 ) )
+		formatString: 0
+		displayFolder: Pilotage
+		lineageTag: 3bead7d0-07ca-5cc8-9f08-86b9578aedf1
+
+	/// Taille des bulles des pays du Top : taux de mortalité WASH pour 100 000. Le nombre absolu de décès figure séparément dans la liste et les infobulles.
+	measure 'Health Priority Map Size' = IF ( [Health Priority In Top N] = 1, [Health Priority Rate] )
+		formatString: 0.00
+		displayFolder: Priorités sanitaires
+		lineageTag: 61775677-ec25-5fa6-8a56-b0d79501e2dc
+
+	/// Nom du pays en infobulle sous forme de mesure, sans ajouter un champ catégoriel à la légende Azure Maps.
+	measure 'Health Priority Country Label' = SELECTEDVALUE ( Dim_Country[Country] )
+		displayFolder: Présentation
+		lineageTag: 9ee51462-9eaf-516b-a7ef-9bb2f838f170
+
+	/// Nombre de pays à mortalité positive renseignée, avec population positive, retenus selon le mode de stabilité. Ne se limite pas au Top N.
+	measure 'Health Priority Candidate Count' =
+			VAR Candidates =
+			    ADDCOLUMNS ( ALLSELECTED ( Dim_Country ), "__Rate", CALCULATE ( [Health Priority Rate] ) )
+			RETURN IF ( [Analysis Year] = 2016,
+			    COALESCE ( COUNTROWS ( FILTER ( Candidates, NOT ISBLANK ( [__Rate] ) && [__Rate] > 0 ) ), 0 ) )
+		formatString: 0
+		displayFolder: Priorités sanitaires
+		lineageTag: 21af5296-bb68-5a93-b813-07a53c5e58bc
+
+	/// Pays avec mortalité positive et population positive écartés car leur stabilité connue est sous le seuil actif. Les indices absents sont comptés séparément.
+	measure 'Health Priority Excluded Stability Count' =
+			VAR Y = [Analysis Year]
+			VAR Cutoff = [Stability Minimum]
+			VAR ApplyFilter = [Stability Filter Enabled] = 1
+			VAR RowsInScope = CALCULATETABLE ( Fact_CountryYear, ALLSELECTED ( Dim_Country ) )
+			RETURN IF ( Y = 2016,
+			    IF ( ApplyFilter,
+			        COALESCE ( COUNTROWS ( FILTER ( RowsInScope,
+			            Fact_CountryYear[Year] = Y && Fact_CountryYear[PopulationTotal] > 0 &&
+			            NOT ISBLANK ( Fact_CountryYear[MortalityRate] ) && Fact_CountryYear[MortalityRate] > 0 &&
+			            NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] < Cutoff ) ), 0 ), 0 ) )
+		formatString: 0
+		displayFolder: Priorités sanitaires
+		lineageTag: ec4b0057-ae37-5423-8278-e9b98fe50c75
+
+	/// Pays avec mortalité positive et population positive mais stabilité absente. Exclus seulement lorsque le seuil est activé.
+	measure 'Health Priority Unknown Stability Count' =
+			VAR Y = [Analysis Year]
+			VAR Cutoff = [Stability Minimum]
+			VAR ApplyFilter = [Stability Filter Enabled] = 1
+			VAR RowsInScope = CALCULATETABLE ( Fact_CountryYear, ALLSELECTED ( Dim_Country ) )
+			RETURN IF ( Y = 2016,
+			    COALESCE ( COUNTROWS ( FILTER ( RowsInScope,
+			        Fact_CountryYear[Year] = Y && Fact_CountryYear[PopulationTotal] > 0 &&
+			        NOT ISBLANK ( Fact_CountryYear[MortalityRate] ) && Fact_CountryYear[MortalityRate] > 0 &&
+			        ISBLANK ( Fact_CountryYear[PoliticalStability] ) ) ), 0 ) )
+		formatString: 0
+		displayFolder: Priorités sanitaires
+		lineageTag: 5c345dbb-0bf3-51e0-af51-3e7983d2122d
+
+	/// Pays admissibles selon le mode de stabilité mais sans mortalité renseignée. Les absences restent distinctes d’une mortalité nulle.
+	measure 'Health Priority Missing Mortality Count' =
+			VAR Y = [Analysis Year]
+			VAR Cutoff = [Stability Minimum]
+			VAR ApplyFilter = [Stability Filter Enabled] = 1
+			VAR RowsInScope = CALCULATETABLE ( Fact_CountryYear, ALLSELECTED ( Dim_Country ) )
+			RETURN IF ( Y = 2016,
+			    COALESCE ( COUNTROWS ( FILTER ( RowsInScope,
+			        Fact_CountryYear[Year] = Y && ISBLANK ( Fact_CountryYear[MortalityRate] ) &&
+			        ( NOT ( ApplyFilter ) ||
+			          ( NOT ISBLANK ( Fact_CountryYear[PoliticalStability] ) && Fact_CountryYear[PoliticalStability] >= Cutoff ) ) ) ), 0 ) )
+		formatString: 0
+		displayFolder: Priorités sanitaires
+		lineageTag: 2c8aa8ef-65e8-5d51-856a-75e9b937dc3c
+
+	/// Titre du périmètre du classement. Ne transporte pas les observations de 2016 vers une autre année.
+	measure 'Health Priority Scope Label' =
+			VAR Y = [Analysis Year]
+			VAR ScopeName =
+			    SWITCH ( TRUE (),
+			        ISFILTERED ( Dim_Country[WHORegion] ), SELECTEDVALUE ( Dim_Country[WHORegion], "Plusieurs régions OMS" ),
+			        ISFILTERED ( Dim_Country[Continent] ), SELECTEDVALUE ( Dim_Country[Continent], "Plusieurs continents" ),
+			        "Monde" )
+			RETURN IF ( ISBLANK ( Y ), "Choisir une seule année",
+			    IF ( Y <> 2016, "Classement sanitaire indisponible pour " & FORMAT ( Y, "0" ) & " — sélectionner 2016",
+			        "Top " & FORMAT ( [Priority Top N], "0" ) & " sanitaire · " & ScopeName & " · 2016" ) )
+		displayFolder: Présentation
+		lineageTag: 9b6aab47-f8dc-527a-9ea8-1d19b6c0f68c
+
+	/// Nombre de pays classables et motifs d’exclusion. Les pays sous le seuil et sans indice sont comptés seulement parmi ceux ayant mortalité et population positives.
+	measure 'Health Priority Status Label' =
+			VAR Y = [Analysis Year]
+			VAR ModeLabel =
+			    IF ( [Stability Filter Enabled] = 1,
+			        "Stabilité ≥ " & FORMAT ( [Stability Minimum], "0.0" ) &
+			        " · " & FORMAT ( [Health Priority Excluded Stability Count], "0" ) & " pays sous le seuil" &
+			        " · " & FORMAT ( [Health Priority Unknown Stability Count], "0" ) & " sans indice, exclus",
+			        "Sans filtre de stabilité · " & FORMAT ( [Health Priority Unknown Stability Count], "0" ) & " indices absents, non exclus" )
+			RETURN IF ( Y <> 2016 || ISBLANK ( Y ),
+			    "La mortalité du projet est disponible uniquement en 2016. Aucun classement sanitaire n’est calculé hors 2016.",
+			    FORMAT ( [Health Priority Candidate Count], "0" ) & " pays classables · " & ModeLabel &
+			    " · " & FORMAT ( [Health Priority Missing Mortality Count], "0" ) & " pays admissibles sans mortalité" )
+		displayFolder: Présentation
+		lineageTag: 6dbc90dc-19f0-564f-97e8-c0f69c1c0ef4
+
 	column _Placeholder
 		isHidden
 		formatString: 0

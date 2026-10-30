@@ -12,6 +12,7 @@ table Dim_Country
 	column Country
 		dataType: string
 		lineageTag: 39f0d7cb-6640-48d7-9448-18aa90c64ab6
+		dataCategory: Country
 		summarizeBy: none
 		sourceColumn: Country
 
@@ -20,6 +21,7 @@ table Dim_Country
 	column ISO3
 		dataType: string
 		lineageTag: 20850e5c-148b-409d-85c3-067264fc149a
+		dataCategory: Country
 		summarizeBy: none
 		sourceColumn: ISO3
 

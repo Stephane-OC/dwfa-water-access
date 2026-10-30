@@ -1,0 +1,15 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "ce9d4531452ea17159f9",
+  "displayName": "Contexte OMS / FAO",
+  "displayOption": "FitToPage",
+  "height": 1080,
+  "width": 1920,
+  "visualInteractions": [
+    {
+      "source": "fd9e98e3e221ac17fb74",
+      "target": "bffa4479526fbb0bd358",
+      "type": "NoFilter"
+    }
+  ]
+}

@@ -4,5 +4,17 @@
   "displayName": "Vue nationale",
   "displayOption": "FitToPage",
   "height": 1080,
-  "width": 1920
+  "width": 1920,
+  "visualInteractions": [
+    {
+      "source": "ca471bf12429c7508b21",
+      "target": "bbb38f5e720652f22ac6",
+      "type": "NoFilter"
+    },
+    {
+      "source": "ca471bf12429c7508b21",
+      "target": "f5fef0337dee5ba45887",
+      "type": "NoFilter"
+    }
+  ]
 }
