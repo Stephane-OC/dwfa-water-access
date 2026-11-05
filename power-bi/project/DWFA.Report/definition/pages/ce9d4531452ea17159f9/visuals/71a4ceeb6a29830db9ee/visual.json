@@ -1,5 +1,5 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "71a4ceeb6a29830db9ee",
   "position": {
     "x": 24,
@@ -171,7 +171,7 @@
                 "Version": 2,
                 "From": [
                   {
-                    "Name": "s",
+                    "Name": "p",
                     "Entity": "Param_StabilityMode",
                     "Type": 0
                   }
@@ -185,7 +185,7 @@
                             "Column": {
                               "Expression": {
                                 "SourceRef": {
-                                  "Source": "s"
+                                  "Source": "p"
                                 }
                               },
                               "Property": "Mode"
@@ -196,7 +196,7 @@
                           [
                             {
                               "Literal": {
-                                "Value": "'Tous les pays'"
+                                "Value": "'Appliquer le seuil'"
                               }
                             }
                           ]

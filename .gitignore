@@ -17,3 +17,4 @@ desktop.ini
 *.bak
 .venv
 .vscode
+DWFA_Backup_Audit_*/

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "752bcd52c163b550f2e9",
   "position": {
     "x": 24,
@@ -19,11 +19,35 @@
               {
                 "textRuns": [
                   {
-                    "value": "Sources : OMS et FAO\nPérimètre : 194 pays\nMortalité : 2016 uniquement",
+                    "value": "Sources : OMS et FAO",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "11pt",
-                      "color": "#BCD0E8"
+                      "color": "#bcd0e8"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Périmètre : 194 pays",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "11pt",
+                      "color": "#bcd0e8"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Mortalité : 2016 uniquement",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "11pt",
+                      "color": "#bcd0e8"
                     }
                   }
                 ]
